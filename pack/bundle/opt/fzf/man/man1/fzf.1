@@ -21,7 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ..
-.TH fzf 1 "Apr 2026" "fzf 0.71.0" "fzf - a command-line fuzzy finder"
+.TH fzf 1 "May 2026" "fzf 0.73.0" "fzf - a command-line fuzzy finder"
 
 .SH NAME
 fzf - a command-line fuzzy finder
@@ -517,6 +517,8 @@ Draw border around the finder
 .br
 .BR double "        Border with double lines"
 .br
+.BR dashed "        Border with dashed lines and rounded corners"
+.br
 .BR block "         Border using block elements; suitable when using different background colors"
 .br
 .BR thinblock "     Border using legacy computing symbols; may not be displayed on some terminals"
@@ -955,6 +957,8 @@ Should be used with one of the following \fB\-\-preview\-window\fR options.
 .br
 .B * border\-double
 .br
+.B * border\-dashed
+.br
 .B * border\-block
 .br
 .B * border\-thinblock
@@ -989,8 +993,13 @@ border line.
     \fBdown
     \fBleft
     \fBright
+    \fBnext
 
 \fRDetermines the layout of the preview window.
+
+* \fBnext\fR places the preview window adjacent to the input section, on
+the list side: above the input in the default layout, below the input
+in \fB\-\-layout=reverse\fR.
 
 * If the argument contains \fB:hidden\fR, the preview window will be hidden by
 default until \fBtoggle\-preview\fR action is triggered.
@@ -1100,7 +1109,17 @@ Print header before the prompt line. When both normal header and header lines
 .TP
 .BI "\-\-header\-border" [=STYLE]
 Draw border around the header section. \fBline\fR style draws a single
-separator line between the header window and the list section.
+separator line between the header window and the list section. \fBinline\fR
+style embeds the header inside the list border frame, joined to the list
+section by a horizontal separator; it requires a \fB\-\-list\-border\fR
+shape that has both top and bottom segments (rounded / sharp / bold /
+double / dashed / block / thinblock / horizontal) and falls back to \fBline\fR
+otherwise. When the list border also has side segments, the separator
+joins them with T-junctions; \fBhorizontal\fR has no side borders, so the
+separator is drawn without T-junction endpoints. Takes precedence over
+\fB\-\-header\-first\fR (the section stays inside the list frame), and
+when \fB\-\-header\-lines\fR is also set \fB\-\-header\-lines\-border\fR
+must also be \fBinline\fR.
 
 .TP
 .BI "\-\-header\-label" [=LABEL]
@@ -1116,6 +1135,10 @@ Display header from \fB--header\-lines\fR with a separate border. Pass
 \fBnone\fR to still separate the header lines but without a border. To combine
 two headers, use \fB\-\-no\-header\-lines\-border\fR. \fBline\fR style draws
 a single separator line between the header lines and the list section.
+\fBinline\fR style embeds the header lines inside the list border frame
+with a horizontal separator; it requires a \fB\-\-list\-border\fR shape
+that has both top and bottom segments, falls back to \fBline\fR
+otherwise.
 
 .SS FOOTER
 
@@ -1129,7 +1152,10 @@ are not affected by \fB\-\-with\-nth\fR. ANSI color codes are processed even whe
 .TP
 .BI "\-\-footer\-border" [=STYLE]
 Draw border around the footer section. \fBline\fR style draws a single
-separator line between the footer and the list section.
+separator line between the footer and the list section. \fBinline\fR style
+embeds the footer inside the list border frame with a horizontal separator;
+it requires a \fB\-\-list\-border\fR shape that has both top and bottom
+segments and falls back to \fBline\fR otherwise.
 
 .TP
 .BI "\-\-footer\-label" [=LABEL]
@@ -1347,6 +1373,12 @@ Print script to set up Fish shell integration
 
 e.g. \fBfzf \-\-fish | source\fR
 
+.TP
+.B "\-\-nushell"
+Print script to set up Nushell shell integration
+
+e.g. \fBfzf \-\-nushell | save \-f ~/.config/nushell/autoload/_fzf_integration.nu\fR
+
 .SS OTHERS
 .TP
 .B "\-\-no\-mouse"
@@ -1449,6 +1481,8 @@ fzf exports the following environment variables to its child processes.
 .br
 .BR FZF_POS "             Vertical position of the cursor in the list starting from 1"
 .br
+.BR FZF_CURRENT_ITEM "    Text of the current item (unset if the list is empty)"
+.br
 .BR FZF_WRAP "            The line wrapping mode (char, word) when enabled"
 .br
 .BR FZF_QUERY "           Current query string"
@@ -1478,6 +1512,10 @@ fzf exports the following environment variables to its child processes.
 .BR FZF_ACTION "          The name of the last action performed"
 .br
 .BR FZF_KEY "             The name of the last key pressed"
+.br
+.BR FZF_IDLE_TIME "       Whole seconds since the last user activity"
+.br
+.BR FZF_IDLE_TIME_MS "    Milliseconds since the last user activity"
 .br
 .BR FZF_PORT "            Port number when \-\-listen option is used"
 .br
@@ -1916,6 +1954,30 @@ Triggered when a mouse click occurs within the footer. Sets
 \fBFZF_CLICK_FOOTER_LINE\fR and \fBFZF_CLICK_FOOTER_COLUMN\fR environment
 variables starting from 1. It optionally sets \fBFZF_CLICK_FOOTER_WORD\fR
 if clicked on a word.
+.RE
+
+\fIevery(N)\fR
+.RS
+Triggered every \fIN\fR seconds (\fIN\fR can be a fractional number, e.g.
+\fB0.5\fR). The minimum interval is \fB0.01\fR seconds; values are floored
+to that.
+
+Combine with the \fBFZF_IDLE_TIME\fR (whole seconds) and
+\fBFZF_IDLE_TIME_MS\fR (milliseconds) environment variables to build
+idle\-based behavior without a separate event.
+
+e.g.
+     \fB# Live process list, refreshed every 2 seconds.
+     # --track --id-nth 2 keeps the cursor on the same PID across reloads.
+     fzf \-\-header\-lines 1 \-\-track \-\-id\-nth 2 \\
+         \-\-bind 'start,every(2):reload\-sync:ps \-ef'
+
+     # Auto\-accept after 10 seconds of inactivity, with a countdown in the footer after 5s.
+     fzf \-\-bind 'every(1):bg\-transform:
+       if   [[ $FZF_IDLE_TIME \-lt 5  ]]; then echo change\-footer:
+       elif [[ $FZF_IDLE_TIME \-lt 10 ]]; then echo "change\-footer:auto\-accept in $((10 \- FZF_IDLE_TIME))s"
+       else echo accept
+       fi'\fR
 .RE
 
 .SS AVAILABLE ACTIONS:

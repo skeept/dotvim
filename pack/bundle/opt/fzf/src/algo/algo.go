@@ -266,7 +266,7 @@ func charClassOf(char rune) charClass {
 }
 
 func bonusFor(prevClass charClass, class charClass) int16 {
-	if class > charNonWord {
+	if class >= charNonWord {
 		switch prevClass {
 		case charWhite:
 			// Word boundary after whitespace
@@ -443,7 +443,7 @@ func FuzzyMatchV2(caseSensitive bool, normalize bool, forward bool, input *util.
 	// we fall back to the greedy algorithm.
 	// Also, we should not allow a very long pattern to avoid 16-bit integer
 	// overflow in the score matrix. 1000 is a safe limit.
-	if slab != nil && N*M > cap(slab.I16) || M > 1000 {
+	if slab != nil && int64(N)*int64(M) > int64(cap(slab.I16)) || M > 1000 {
 		return FuzzyMatchV1(caseSensitive, normalize, forward, input, pattern, withPos, slab)
 	}
 

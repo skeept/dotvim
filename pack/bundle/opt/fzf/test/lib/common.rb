@@ -78,6 +78,38 @@ class Shell
           "rm -f ~/.local/share/fish/fzf_test_history; XDG_CONFIG_HOME=#{confdir} fish"
         end
     end
+
+    def nushell
+      @nushell ||=
+        begin
+          xdg_home = '/tmp/fzf-nushell-xdg'
+          config_dir = "#{xdg_home}/nushell"
+          FileUtils.rm_rf(xdg_home)
+          FileUtils.mkdir_p(config_dir)
+
+          # Write env.nu to set up PATH and unset FZF variables
+          File.open("#{config_dir}/env.nu", 'w') do |f|
+            f.puts "$env.PATH = ($env.PATH | split row (char esep) | prepend '#{BASE}/bin')"
+            UNSETS.each do |var|
+              f.puts "hide-env -i #{var}"
+            end
+            f.puts "$env.FZF_DEFAULT_OPTS = \"--no-scrollbar --pointer '>' --marker '>'\""
+            f.puts '$env.config = ($env.config | upsert history { file_format: "plaintext", max_size: 100 })'
+          end
+
+          # Write config.nu with minimal prompt
+          File.open("#{config_dir}/config.nu", 'w') do |f|
+            f.puts '$env.PROMPT_COMMAND = {|| "" }'
+            f.puts '$env.PROMPT_INDICATOR = ""'
+            f.puts '$env.PROMPT_COMMAND_RIGHT = {|| "" }'
+            f.puts '$env.config = ($env.config | upsert show_banner false)'
+            f.puts "source #{BASE}/shell/key-bindings.nu"
+            f.puts "source #{BASE}/shell/completion.nu"
+          end
+
+          "unset #{UNSETS.join(' ')}; env XDG_CONFIG_HOME=#{xdg_home} XDG_DATA_HOME=#{xdg_home}/../fzf-nushell-data nu --config #{config_dir}/config.nu --env-config #{config_dir}/env.nu"
+        end
+    end
   end
 end
 
@@ -85,12 +117,30 @@ class Tmux
   attr_reader :win
 
   def initialize(shell = :bash)
+    @shell = shell
     @win = go(%W[new-window -d -P -F #I #{Shell.send(shell)}]).first
     go(%W[set-window-option -t #{@win} pane-base-index 0])
-    return unless shell == :fish
-
-    send_keys 'function fish_prompt; end; clear', :Enter
-    self.until(&:empty?)
+    if shell == :fish
+      send_keys 'function fish_prompt; end; clear', :Enter
+      self.until(&:empty?)
+    elsif shell == :nushell
+      # Clear history from previous tests to avoid contamination
+      FileUtils.rm_f('/tmp/fzf-nushell-xdg/nushell/history.txt')
+      # Wait for nushell to be ready by polling with a marker command.
+      # We use 'print "fzf-ready"' and check for a line that is exactly
+      # 'fzf-ready' (not the command echo which includes 'print').
+      retries = 0
+      begin
+        send_keys 'print "fzf-ready"', :Enter
+        self.until { |lines| lines.any? { |l| l.strip == 'fzf-ready' } }
+      rescue Minitest::Assertion
+        retries += 1
+        raise if retries > 5
+        retry
+      end
+      send_keys 'clear', :Enter
+      self.until(&:empty?)
+    end
   end
 
   def kill
@@ -105,12 +155,94 @@ class Tmux
     go(%W[send-keys -t #{win}] + args.map(&:to_s))
   end
 
+  # Simulate a mouse click at the given 1-based column and row using the SGR mouse protocol
+  # (xterm mouse mode 1006, which fzf enables). The escape sequence is injected as literal
+  # keystrokes via tmux, and fzf parses it like a real terminal mouse event.
+  #
+  # tmux's own mouse handling intercepts these sequences when `set -g mouse on`, so we toggle
+  # mouse off for the duration of the click and restore the previous state afterwards.
+  def click(col, row, button: 0)
+    prev = go(%w[show-options -gv mouse]).first
+    go(%w[set-option -g mouse off])
+    begin
+      seq = "\e[<#{button};#{col};#{row}M\e[<#{button};#{col};#{row}m"
+      go(%W[send-keys -t #{win} -l #{seq}])
+    ensure
+      go(%W[set-option -g mouse #{prev}]) if prev && !prev.empty?
+    end
+  end
+
   def paste(str)
     system('tmux', 'setb', str, ';', 'pasteb', '-t', win, ';', 'send-keys', '-t', win, 'Enter')
   end
 
   def capture
     go(%W[capture-pane -p -J -t #{win}]).map(&:rstrip).reverse.drop_while(&:empty?).reverse
+  end
+
+  # Raw pane capture with ANSI escape sequences preserved.
+  def capture_ansi
+    go(%W[capture-pane -p -J -e -t #{win}])
+  end
+
+  # 3-bit ANSI bg code (40..47) -> color name used in --color options.
+  BG_NAMES = %w[black red green yellow blue magenta cyan white].freeze
+
+  # Parse `tmux capture-pane -e` output into per-row bg ranges. Each row is an
+  # array of [col_start, col_end, bg] tuples where bg is one of:
+  #   'default'
+  #   'red' / 'green' / 'blue' / ... (3-bit names)
+  #   'bright-red' / ...             (bright variants)
+  #   '256:<n>'                      (256-color fallback)
+  # ANSI state persists across rows, matching real terminal behavior.
+  def bg_ranges
+    raw = go(%W[capture-pane -p -J -e -t #{win}])
+    bg = 'default'
+    raw.map do |row|
+      cells = []
+      i = 0
+      len = row.length
+      while i < len
+        c = row[i]
+        if c == "\e" && row[i + 1] == '['
+          j = i + 2
+          j += 1 while j < len && row[j] != 'm'
+          parts = row[i + 2...j].split(';')
+          k = 0
+          while k < parts.length
+            p = parts[k].to_i
+            case p
+            when 0, 49 then bg = 'default'
+            when 40..47 then bg = BG_NAMES[p - 40]
+            when 100..107 then bg = "bright-#{BG_NAMES[p - 100]}"
+            when 48
+              if parts[k + 1] == '5'
+                bg = "256:#{parts[k + 2]}"
+                k += 2
+              elsif parts[k + 1] == '2'
+                bg = "rgb:#{parts[k + 2]}:#{parts[k + 3]}:#{parts[k + 4]}"
+                k += 4
+              end
+            end
+            k += 1
+          end
+          i = j + 1
+        else
+          cells << bg
+          i += 1
+        end
+      end
+      ranges = []
+      start = 0
+      cells.each_with_index do |b, idx|
+        if idx.positive? && b != cells[idx - 1]
+          ranges << [start, idx - 1, cells[idx - 1]]
+          start = idx
+        end
+      end
+      ranges << [start, cells.length - 1, cells.last] unless cells.empty?
+      ranges
+    end
   end
 
   def until(refresh = false, timeout: DEFAULT_TIMEOUT)
@@ -160,11 +292,19 @@ class Tmux
   def prepare
     tries = 0
     begin
-      self.until(true) do |lines|
+      if @shell == :nushell
         message = "Prepare[#{tries}]"
-        send_keys ' ', 'C-u', :Enter, message, :Left, :Right
-        sleep(0.15)
-        lines[-1] == message
+        send_keys 'C-u', 'C-l'
+        sleep 0.2
+        send_keys ' ', 'C-u', :Enter, message
+        self.until { |lines| lines[-1] == message }
+      else
+        self.until(true) do |lines|
+          message = "Prepare[#{tries}]"
+          send_keys ' ', 'C-u', :Enter, message, :Left, :Right
+          sleep(0.15)
+          lines[-1] == message
+        end
       end
     rescue Minitest::Assertion
       (tries += 1) < 5 ? retry : raise
