@@ -1081,12 +1081,18 @@ fun! nrrwrgn#NrrwRgnDoMulti(...) abort "{{{1
 		for nr in keys
 			let lines = s:nrrw_rgn_buf[buf][nr]
 			let start = lines[0]
-			let end   = len(lines)==2 ? lines[1] : lines[0]
+			if (len(lines) == 2 && lines[0] != lines[1])
+				let end = lines[1]
+				let range = printf(":%d-%d", start, end)
+			else
+				let end = lines[0]
+				let range = printf(":%d", start)
+			endif
 			if !bang
 				call <sid>AddMatches(<sid>GeneratePattern([start,0],
 					\ [end,0], 'V'), s:instn)
 			endif
-			call add(buffer, c_s.' Start NrrwRgn'.nr.' buffer: '.simplify(bufname("")).c_e)
+			call add(buffer, c_s.' Start NrrwRgn'.nr.' buffer: '.simplify(bufname("")).range..c_e)
 			let buffer = buffer +
 					\ getline(start,end) +
 					\ [c_s.' End NrrwRgn'.nr. ' buffer: '.

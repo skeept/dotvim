@@ -508,6 +508,7 @@ looking at my Amazon whishlist: http://www.amazon.de/wishlist/2BKAHE8J7Z6UW
 5. NrrwRgn History                                          *NrrwRgn-history*
 
 0.35: (unreleased) {{{1
+- include line numbers in multi narrowed regions
 0.34: Nov 05, 2025 {{{1
 - merge Github Pull #34 (https://github.com/chrisbra/NrrwRgn/pull/34, by
   Pyrohh, thanks!)
