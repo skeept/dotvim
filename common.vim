@@ -183,6 +183,13 @@ nnoremap ,fb :Buffers<CR>
 nnoremap ,fh :History<CR>
 nnoremap ,fc :Commands<CR>
 nnoremap ,fl :Lines<CR>
+nnoremap ,fg :RG<CR>
+nnoremap ,fw :Rg <C-R><C-W><CR>
+nnoremap ,fd :<C-U>call fzf#vim#grep2('rg --column --line-number --no-heading --color=always --smart-case -- ',
+      \ '', fzf#vim#with_preview({'dir': expand('%:p:h')}), 0)<CR>
+nnoremap ,fi :<C-U>call fzf#vim#files('',
+      \ {'source': 'fd --no-ignore --hidden --type f . ' . shellescape(expand('%:p:h')),
+      \  'options': '--prompt "AllFiles> "'}, 0)<CR>
 nnoremap ,vv :Files<CR>
 
 nnoremap <SPACE>z :FZF<ENTER>
@@ -714,6 +721,10 @@ command! -range=% DelTrailWhiteSpace
       \ | <line1>,<line2>call jraf#stripTrailingWhitespace()
 "==============================================================================}}}
 
+"================== Remove Carriage Returns ==================================={{{
+command! -range=% RemoveCR <line1>,<line2>s/\r//ge
+"==============================================================================}}}
+
 "================== Split words into Lines ===================================={{{
 command! SplitInLines call jraf#splitInLines()
 "==============================================================================}}}
@@ -770,15 +781,23 @@ command! -count=1 Jump exe ":norm! <count>\<C-I>"
 
 " path related commands {{{
 
-" change to path of current file
-command! -bang ChgDirCurrFileFolder
-      \ if "<bang>" == ""  |
-      \ lcd %:p:h |
-      \ else |
-      \ cd! %:p:h | endif
-
-nnoremap ,cd :<C-U>ChgDirCurrFileFolder<CR>
-nnoremap ,cu :<C-U>cd! %:p:h \| cd ..\| echo expand('%:p:h:h')<CR>
+" change to path of current file, [count],cd goes up count directories
+function! s:ChgDirWithCount(count, bang)
+  let path = expand('%:p:h')
+  let i = 0
+  while i < a:count
+    let path = fnamemodify(path, ':h')
+    let i += 1
+  endwhile
+  if a:bang
+    execute 'cd! ' . fnameescape(path)
+  else
+    execute 'lcd ' . fnameescape(path)
+  endif
+  echo path
+endfunction
+command! -bang -count=0 ChgDirCurrFileFolder call s:ChgDirWithCount(<count>, "<bang>" != "")
+nnoremap ,cd :<C-U>call <SID>ChgDirWithCount(v:count, 0)<CR>
 
 " print current files pwd
 function! s:PrintAndCopyPath(...)
