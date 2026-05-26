@@ -27,7 +27,6 @@ end, {
 
 vim.keymap.set("n", "<Leader>oo", ":CaptureToScratch<space>")
 vim.keymap.set("n", "<Leader>oc", ":CaptureOutput<space>")
-vim.keymap.set("n", "<Leader>oc", ":CaptureOutput<space>")
 vim.keymap.set("n", ",cs", ":CaptureToScratch<space>")
 -- vim.schedule(function()
 --   vim.keymap.set("n", ",cs", ":CaptureToScratch<space>", { noremap = true, silent = false })

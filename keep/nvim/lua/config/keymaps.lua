@@ -11,10 +11,17 @@ vim.keymap.set("i", "<F1>", "<C-O>:wa<CR>", { noremap = true })
 vim.keymap.set("n", "g/", "/\\<\\><left><left>", { noremap = true })
 vim.keymap.set("n", "<tab>", "<c-w>", { noremap = true })
 
+-- gp: select last pasted (or changed) text
+vim.keymap.set("n", "gp", "`[v`]", { noremap = true, desc = "Select last pasted text" })
+-- gy: yank line without newline, restoring cursor
+vim.keymap.set("n", "gy", "m`^yg_``", { noremap = true, desc = "Yank inner line (no newline)" })
+-- gY: yank from cursor to end of line (no newline)
+vim.keymap.set("n", "gY", "yg_", { noremap = true, desc = "Yank to end of line" })
+
 vim.keymap.set({ "n", "v" }, "<F4>", ":x<CR>", { noremap = true })
 vim.keymap.set("i", "<F4>", "<C-O>:x<CR>", { noremap = true })
 
-vim.api.nvim_create_user_command("DeltTrailingSpace", function()
+vim.api.nvim_create_user_command("DelTrailingSpace", function()
   vim.cmd([[%s/\s\+$//e]])
 end, {
   desc = "delete trailing whitespace",
@@ -73,15 +80,78 @@ wk.add({
       local modifier = ":p:h" .. string.rep(":h", count)
       require("fzf-lua").files({ cwd = vim.fn.expand("%" .. modifier) })
     end,
-    desc = "files in pwd",
+    desc = "files in dir (count=go up)",
+  },
+  {
+    ",fd",
+    function()
+      local count = vim.v.count
+      local modifier = ":p:h" .. string.rep(":h", count)
+      require("fzf-lua").live_grep({ cwd = vim.fn.expand("%" .. modifier) })
+    end,
+    desc = "fzf: grep in dir (count=go up)",
   },
   { ",b", "<cmd>FzfLua buffers<cr>", desc = "buffers" },
-  { ",f", group = "fzf" },
-  { ",ff", "<cmd>FzfLua<cr>", desc = "Fzf" },
-  { ",fg", "<cmd>FzfLua grep_project<cr>", desc = "grep project" },
-  { ",fr", "<cmd>FzfLua oldfiles<cr>", desc = "recent files" },
-  { ",fc", "<cmd>FzfLua commands<cr>", desc = "commands" },
-  { ",fh", "<cmd>FzfLua command_history<cr>", desc = "command history" },
+  { ",f", group = "find" },
+  -- fff (fast fuzzy finder) — lowercase
+  {
+    ",ff",
+    function() require("fff").find_files() end,
+    desc = "fff: files",
+  },
+  {
+    ",fp",
+    function()
+      local root = vim.fs.root(0, ".git") or vim.fn.getcwd()
+      require("fff").find_files({ cwd = root })
+    end,
+    desc = "fff: files from project root",
+  },
+  {
+    ",fg",
+    function() require("fff").live_grep() end,
+    desc = "fff: grep",
+  },
+  {
+    ",fG",  -- override: fff project root grep (fzf grep_project moved to ,fG below)
+    function()
+      local root = vim.fs.root(0, ".git") or vim.fn.getcwd()
+      require("fff").live_grep({ cwd = root })
+    end,
+    desc = "fff: grep from project root",
+  },
+  {
+    ",fz",
+    function() require("fff").live_grep({ grep = { modes = { "fuzzy", "plain" } } }) end,
+    desc = "fff: fuzzy grep",
+  },
+  {
+    ",fw",
+    function() require("fff").live_grep({ query = vim.fn.expand("<cword>") }) end,
+    desc = "fff: grep word under cursor",
+  },
+  -- fzf-lua — uppercase for overlapping operations
+  { ",fF", "<cmd>FzfLua files<cr>", desc = "fzf: files" },
+  {
+    ",fP",
+    function() require("fzf-lua").grep_project() end,
+    desc = "fzf: grep project",
+  },
+  {
+    ",fi",
+    function()
+      local count = vim.v.count
+      local modifier = ":p:h" .. string.rep(":h", count)
+      require("fzf-lua").files({
+        cwd = vim.fn.expand("%" .. modifier),
+        fd_opts = "--color=never --type f --hidden --follow --no-ignore --exclude .git",
+      })
+    end,
+    desc = "fzf: all files incl. ignored in dir (count=go up)",
+  },
+  { ",fr", "<cmd>FzfLua oldfiles<cr>", desc = "fzf: recent files" },
+  { ",fc", "<cmd>FzfLua commands<cr>", desc = "fzf: commands" },
+  { ",fh", "<cmd>FzfLua command_history<cr>", desc = "fzf: command history" },
   { ",v", group = "search with vimgrep" },
   { ",vn", ":vimgrep // *<Left><Left><Left>", desc = "vimgrep this folder (start typing)" },
   { ",vr", ":vimgrep // **/*<Left><Left><Left><Left><Left><Left>", desc = "vimgrep nested" },
