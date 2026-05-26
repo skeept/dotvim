@@ -26,7 +26,7 @@ if [ "$CURSHELL" = "bash" ]; then
   # we assume if this folder exists we are in nix setup
   [ -d ~/src/SABRE2/sabre2/ ] || set -o noclobber
   #set -o ignoreeof
-  set -o nounset
+  #set -o nounset         # risky in interactive config: breaks completions and uninitialized vars
   #set -o xtrace          # useful for debuging
 
   shopt -s cdspell
@@ -167,7 +167,8 @@ function _exit()        # function to run upon exit of shell
 {
   echo -e "${RED}Hasta la vista, baby${NC}"
 }
-trap _exit 0
+# Only trap in top-level shells; avoids firing on every tmux pane / subshell exit
+[[ "$SHLVL" -eq 1 ]] && trap _exit EXIT
 
 #===============================================================
 #
