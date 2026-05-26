@@ -4,6 +4,7 @@
 " ~/.config/nvim/
 " ~/AppData/Local/nvim 
 
+" Disable Python providers — not needed since ALE uses basedpyright externally
 let g:loaded_python_provider = 0
 let g:loaded_python3_provider = 0
 

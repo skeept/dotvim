@@ -142,9 +142,49 @@ function! LoadGina()
         \)
 endfunction
 
-if exists('g:loaded_gina') && g:loaded_gina
-  call LoadGina()
-endif
+" LoadGina() is triggered via 'autocmd! User gina.vim' in plug_load.vim
+"==============================================================================}}}
+
+"================== ALE (Python via ruff + basedpyright) ====================={{{
+" ALE lazy-loads when Python/shell/JSON/C/C++ files open (see plug_load.vim)
+" Completions flow through ale#completion#OmniFunc → asyncomplete-omni.
+" basedpyright is installed via: uv tool install basedpyright
+let g:ale_linters = {
+      \ 'python': ['ruff', 'basedpyright'],
+      \ 'sh':     ['shell'],
+      \ 'bash':   ['shell', 'shellcheck'],
+      \ 'json':   ['python'],
+      \ }
+let g:ale_fixers = {
+      \ '*':      [],
+      \ 'python': ['ruff', 'ruff_format'],
+      \ 'json':   ['jq'],
+      \ }
+let g:ale_fix_on_save = 0
+let g:ale_completion_enabled = 1
+let g:ale_hover_to_floating_preview = has('nvim')
+let g:ale_floating_preview = has('nvim')
+let g:ale_echo_msg_format = '[%linter%] %s [%severity%]'
+" json: use python3 -m json.tool as the validator
+let g:ale_json_python_executable = 'python3'
+
+augroup ale_python_maps
+  autocmd!
+  " Warn if basedpyright is missing so the user knows what to install
+  autocmd FileType python
+        \ if !executable('basedpyright-langserver') |
+        \   echohl WarningMsg |
+        \   echom '[ALE] basedpyright not found. Install with: uv tool install basedpyright' |
+        \   echohl None |
+        \ endif
+  autocmd FileType python nnoremap <buffer> gd :ALEGoToDefinition<CR>
+  autocmd FileType python nnoremap <buffer> K  :ALEHover<CR>
+  autocmd FileType python nnoremap <buffer> <Leader>gr :ALEFindReferences<CR>
+  autocmd FileType python nnoremap <buffer> <Leader>rn :ALERename<CR>
+  autocmd FileType python nnoremap <buffer> ,af :ALEFix<CR>
+  autocmd FileType python nnoremap <buffer> [e :ALEPreviousWrap<CR>
+  autocmd FileType python nnoremap <buffer> ]e :ALENextWrap<CR>
+augroup END
 "==============================================================================}}}
 
 "================== Mucomplete ================================================{{{

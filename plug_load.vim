@@ -66,7 +66,7 @@ Plug g:p0 .'/pack/bundle/opt/quickrun', {'on': 'QuickRun'}
 
 Plug 'PProvost/vim-ps1', { 'for': ['dos', 'ps1'] }
 
-Plug 'chrisbra/NrrwRgn', {'on': ['NR', 'NW', 'NRV', 'NW', 'NarrowRegion']}
+Plug 'chrisbra/NrrwRgn', {'on': ['NR', 'NW', 'NRV', 'NarrowRegion']}
 "Plug 'chrisbra/NrrwRgn'
 Plug 'chrisbra/Recover.vim'
 Plug 'chrisbra/improvedft'
@@ -106,7 +106,7 @@ Plug 'lambdalisue/gin.vim', { 'on': ['Gin', 'GinStatus'] }
 " local plugins
 Plug g:p0 . '/pack/bundle/opt/sayonara', {'on': 'Sayonara'}
 
-Plug g:p0 . '/pack/bundle/opt/ale', {'on': ['ALEEnable']}
+Plug g:p0 . '/pack/bundle/opt/ale', {'on': ['ALEEnable'], 'for': ['python', 'sh', 'bash', 'json']}
 
 "airline fails if ale is not properly loaded
 "if use_airline

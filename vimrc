@@ -75,20 +75,6 @@ augroup END
 "==============================================================================}}}
 
 "================== Statusline ================================================{{{
-"set statusline=%-3.3n%t\ \ \ [%{strlen(&fenc)?&fenc:'none'},%{&ff}]%h%m%r%y%=%c,%l/%L\ %P
-"set statusline=%F%m%r%h%w\ [FORMAT=%{&ff}]\ [TYPE=%Y]\ [POS=%l,%v][%p%%]\ %{strftime(\"%d/%m/%y\ -\ %H:%M\")}
-"set statusline=%-3.3n%t\ \ %h%m%r\ %y%=%l/%L\ %3c\ \ \ %P
-"set statusline=%-3.3n%t\ \ \ %h%m%r\ %y%=%{strftime(\"[%H:%M%p]\")}\ \ \ \ \ %l/%L\ \ %3c\ \ \ %P
-"
-"set statusline=%<%f%m\ \[%{&ff}:%{&fenc}:%Y]
-"set statusline+=\ %{getcwd()}\ \ \[%{strftime('%Y/%b/%d\ %a\ %I:%M\ %p')}\]
-"set statusline+=\ %=\ Line:%l\/%L\ Column:%c%V\ %P
-"
-"set statusline=%-3.3n%t\ \ \ %h%m%r%=[%{&ft}\,
-"set statusline+=%{&ff}]\ \ \ %{strftime(\"[%H:%M%p]\")}
-"set statusline+=\ \ \ \ \ %l/%L\ \ %3c\ \ \ %P
-"
-"set statusline=%2.2n\ %t\ %h%m%r%=[%{&ft}\,%{&ff}]
 set statusline=%2.2n\ %t
 set statusline+=\ %h%#Modified#%m%r%*%=
 set statusline+=%{GetNumTabsStr()}
@@ -204,9 +190,8 @@ let g:delimitMate_expand_space = 1
 "==============================================================================}}}
 
 "================== neocomplete ============================================={{{
-if g:load_neocomplete
-  call SetupNeocomplete()
-endif
+" neocomplete is not installed; SetupNeocomplete() is defined in common.vim
+" and guarded by g:load_neocomplete which will be 0. No-op call removed.
 "==============================================================================}}}
 
 "================== Syntastic ================================================={{{
@@ -238,7 +223,6 @@ nnoremap ,vk :<C-U>call WhichKeyMapperHelper()<CR>
 "==============================================================================}}}
 
 "================== Clap ======================================================{{{
-let g:clap_layout = { 'relative': 'editor' }
 let g:clap_layout = { 'width': '95%', 'col': '5%' }
 let g:clap_theme = 'material_design_dark'
 "==============================================================================}}}

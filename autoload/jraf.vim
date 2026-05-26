@@ -245,7 +245,6 @@ function! jraf#loadLatexPlugins()
 
   imap <F8> <Plug>IMAP_JumpForward
   nmap <F8> <Plug>IMAP_JumpForward
-  vmap <F8> <Plug>IMAP_JumpForward
   vmap <F8> <Plug>IMAP_DeleteAndJumpForward
 
   "ActivateAddons LaTeX-Box

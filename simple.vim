@@ -82,33 +82,7 @@ endif
 
 
 "================== Statusline ================================================{{{
-"set statusline=%-3.3n%t\ \ \ [%{strlen(&fenc)?&fenc:'none'},%{&ff}]%h%m%r%y%=%c,%l/%L\ %P
-"set statusline=%F%m%r%h%w\ [FORMAT=%{&ff}]\ [TYPE=%Y]\ [POS=%l,%v][%p%%]\ %{strftime(\"%d/%m/%y\ -\ %H:%M\")}
-"set statusline=%-3.3n%t\ \ %h%m%r\ %y%=%l/%L\ %3c\ \ \ %P
-"set statusline=%-3.3n%t\ \ \ %h%m%r\ %y%=%{strftime(\"[%H:%M%p]\")}\ \ \ \ \ %l/%L\ \ %3c\ \ \ %P
-"
-"set statusline=%<%f%m\ \[%{&ff}:%{&fenc}:%Y]
-"set statusline+=\ %{getcwd()}\ \ \[%{strftime('%Y/%b/%d\ %a\ %I:%M\ %p')}\]
-"set statusline+=\ %=\ Line:%l\/%L\ Column:%c%V\ %P
-"
-"set statusline=%-3.3n%t\ \ \ %h%m%r%=[%{&ft}\,
-"set statusline+=%{&ff}]\ \ \ %{strftime(\"[%H:%M%p]\")}
-"set statusline+=\ \ \ \ \ %l/%L\ \ %3c\ \ \ %P
-"
-"set statusline=%2.2n\ %t\ %h%m%r%=[%{&ft}\,%{&ff}]
-if 0
-set statusline=%2.2n\ %t\ %h%m%r%=
-set statusline+=%{GetNumTabsStr()}
-set statusline+=%{CondDispFtFf()}
-"set statusline+=\ %{strftime(\"[%H:%M%p]\")} "do we want to show time?
-set statusline+=\ %l/%L\ %2c\ %P
-endif
-
-"" SmartusLine
-"hi Modified guifg=black guibg=#FFA500
-"set statusline=%2.2n\ %t\ %h%#Modified#%m%r%*%=%{CondDispFtFf()}\ %l/%L\ %2c\ %P
-"let g:smartusline_string_to_highlight = '%2.2n %t %h'
-"call vam#ActivateAddons(['SmartusLine'], {'auto_install' : 0, 'force_loading_plugins_now': 1})
+" statusline is set in common.vim; airline is active for simple.vim
 "==============================================================================}}}
 
 "=================== Plugin Loading ==========================================={{{

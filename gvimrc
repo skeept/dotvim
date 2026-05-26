@@ -92,7 +92,10 @@ colorscheme desert
 "set bg=light | colorscheme solarized
 
 if has("autocmd")
-  autocmd BufEnter * hi PreciseJumpTarget ctermfg=yellow ctermbg=red cterm=bold gui=bold guibg=Red guifg=yellow
+  augroup gvimrc_precise_jump
+    autocmd!
+    autocmd BufEnter * hi PreciseJumpTarget ctermfg=yellow ctermbg=red cterm=bold gui=bold guibg=Red guifg=yellow
+  augroup END
 endif
 
 "simple.vim settings
