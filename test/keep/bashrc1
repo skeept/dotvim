@@ -94,7 +94,7 @@ if [[ -n "$PS1" ]]; then
     # 1. Aliases & Functions (Inheritance doesn't pass these, so load every time)
     [ -e "${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}alias" ] && . "${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}alias"
     [ -e "${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}bashrc2" ] && . "${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}bashrc2"
-    [ -e "${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}wk2.sh" ] && . "${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}wk2.sh"
+    [ -e "${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}wk_shell.sh" ] && . "${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}wk_shell.sh"
 
     # 2. Local Completions
     [ -e "$HOME/bin/links/completions/comp.bash" ] && . "$HOME/bin/links/completions/comp.bash"
