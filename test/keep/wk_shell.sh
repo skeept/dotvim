@@ -30,7 +30,8 @@ function _wk_comp() {
   elif [[ ${COMP_CWORD} -eq 2 && "${COMP_WORDS[1]}" == "-v" ]]; then
     COMPREPLY=($(compgen -W "${commands}" -- "${cur}"))
   else
-    COMPREPLY=()
+    # Fall back to standard file/path completion for command arguments
+    COMPREPLY=($(compgen -f -- "${cur}"))
   fi
 }
 
