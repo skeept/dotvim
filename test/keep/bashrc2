@@ -585,9 +585,11 @@ first_alternative()
 irr()
 {
   # define $WORK_BASE in ~/.bashrc.local
-  py "${WORK_BASE}/utils/src/run_irops.py" "$@"
+  # py "${WORK_BASE}/utils/src/run_irops.py" "$@"
+  wk run_irops "$@"
 }
 
+if false; then
 copy-static()
 {
   # use this to call script to copy scenario
@@ -609,6 +611,7 @@ copy-static()
 
   python "${copy_py}" -i "${static_f}" $@
 }
+fi
 
 fz()
 {
