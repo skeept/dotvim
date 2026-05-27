@@ -7,6 +7,34 @@ import tomllib
 from pathlib import Path
 import shutil
 
+# Directories to skip during recursive folder scan
+_SKIP_DIRS = {
+    ".venv",
+    "venv",
+    "env",
+    ".env",
+    "site-packages",
+    "dist-packages",
+    "__pycache__",
+    ".tox",
+    ".mypy_cache",
+    ".git",
+    "node_modules",
+    ".eggs",
+    "build",
+    "dist",
+}
+
+
+def _iter_py_files(base_dir: Path):
+    """Walk base_dir recursively, skipping noise directories."""
+    for entry in base_dir.iterdir():
+        if entry.is_dir():
+            if entry.name not in _SKIP_DIRS and not entry.name.startswith("."):
+                yield from _iter_py_files(entry)
+        elif entry.suffix == ".py" and entry.name != "__init__.py":
+            yield entry
+
 
 def expand_path(path_str):
     """Expands ~ and environment variables in a path string."""
@@ -36,15 +64,14 @@ def load_config():
     # 1. Recursive Scan (Folders array)
     for folder in config.get("folders", []):
         base_dir = Path(expand_path(folder))
-        if base_dir.is_dir():
-            for py_file in base_dir.rglob("*.py"):
-                if py_file.name == "__init__.py":
-                    continue
-                commands[py_file.stem] = {
-                    "path": str(py_file),
-                    "method": "direct",
-                    "python": def_py,
-                }
+        if not base_dir.is_dir():
+            continue
+        for py_file in _iter_py_files(base_dir):
+            commands[py_file.stem] = {
+                "path": str(py_file),
+                "method": "direct",
+                "python": def_py,
+            }
 
     # 2. Explicit Definitions (Explicit table)
     for key, val in config.get("explicit", {}).items():
@@ -138,6 +165,33 @@ def run_pym(script_dict, dry_run, script_args):
     subprocess.run(cmd, env=env)
 
 
+def print_help(commands):
+    config_file = Path.home() / ".wk_config.toml"
+    print(
+        "Usage: wk [--dry-run] [-v] <command> [args...]\n"
+        "       wk -h | --help\n"
+        "\n"
+        "Flags:\n"
+        "  --dry-run   Print the resolved command without executing it.\n"
+        "  -v          Show details about a command (path, python, method) before running.\n"
+        "  -h, --help  Show this help message.\n"
+        "\n"
+        f"Config file: {config_file}\n"
+        f"Commands registered: {len(commands)}\n"
+        "\n"
+        "Run 'wk' with no arguments to list all available commands."
+    )
+
+
+def print_command_info(key, script_dict):
+    print(
+        f"Command : {key}\n"
+        f"  Path  : {script_dict['path']}\n"
+        f"  Python: {script_dict['python']}\n"
+        f"  Method: {script_dict['method']}"
+    )
+
+
 def main():
     args = sys.argv[1:]
 
@@ -147,16 +201,24 @@ def main():
         print(" ".join(commands.keys()))
         sys.exit(0)
 
-    dry_run = False
-    if "--dry-run" in args:
-        dry_run = True
+    dry_run = "--dry-run" in args
+    if dry_run:
         args.remove("--dry-run")
+
+    verbose = "-v" in args
+    if verbose:
+        args.remove("-v")
+
+    # Help only when explicitly requested
+    if args and args[0] in ("-h", "--help"):
+        commands = load_config()
+        print_help(commands)
+        sys.exit(0)
 
     commands = load_config()
 
     if not args:
         print("Available commands:")
-        # Simple column formatting
         keys = sorted(commands.keys())
         for k in keys:
             print(f"  {k}")
@@ -169,6 +231,10 @@ def main():
         sys.exit(1)
 
     script_dict = commands[key]
+
+    if verbose:
+        print_command_info(key, script_dict)
+        print()
 
     if script_dict["method"] == "pym":
         run_pym(script_dict, dry_run, args)

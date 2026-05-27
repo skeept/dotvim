@@ -24,8 +24,10 @@ function _wk_comp() {
   commands="$_WK_COMP_CACHE"
 
   if [[ ${COMP_CWORD} -eq 1 ]]; then
-    COMPREPLY=($(compgen -W "--dry-run ${commands}" -- "${cur}"))
+    COMPREPLY=($(compgen -W "--dry-run -v -h --help ${commands}" -- "${cur}"))
   elif [[ ${COMP_CWORD} -eq 2 && "${COMP_WORDS[1]}" == "--dry-run" ]]; then
+    COMPREPLY=($(compgen -W "-v ${commands}" -- "${cur}"))
+  elif [[ ${COMP_CWORD} -eq 2 && "${COMP_WORDS[1]}" == "-v" ]]; then
     COMPREPLY=($(compgen -W "${commands}" -- "${cur}"))
   else
     COMPREPLY=()
