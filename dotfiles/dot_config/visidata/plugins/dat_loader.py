@@ -6,8 +6,13 @@ from pathlib import Path
 
 from visidata import CsvSheet, VisiData
 
-sys.path.append("/wrk/or/utils/src")  # for data_names
-sys.path.append(os.path.join(os.path.expanduser("~"), "wk/irops/rt/utils/src"))
+sys.path.extend(
+    [
+        "/wrk/or/utils/src",
+        os.path.expanduser("~/wk/utils/src"),
+        os.path.expanduser("~/wk/irops/utils/src"),
+    ]
+)  # for data_names
 from data_names import get_schema_and_csv
 
 logger = logging.getLogger(__name__)
