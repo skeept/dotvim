@@ -7,6 +7,9 @@ import tomllib
 from pathlib import Path
 import shutil
 
+# Special keyword in python_location lists: search upward from the script for a venv
+VENV_KEYWORD = ":venv:"
+
 # Directories to skip during recursive folder scan
 _SKIP_DIRS = {
     ".venv",
@@ -43,6 +46,53 @@ def expand_path(path_str):
     return os.path.expandvars(os.path.expanduser(path_str))
 
 
+def _find_venv_python(script_path: Path) -> str | None:
+    """Walk upward from script_path looking for a venv or .venv directory.
+
+    Returns the path to the Python executable inside the first one found,
+    or None if no virtual environment is discovered.
+    """
+    bin_dir = "Scripts" if sys.platform == "win32" else "bin"
+    search = script_path.parent.resolve()
+    while True:
+        for venv_name in ("venv", ".venv"):
+            venv_dir = search / venv_name
+            if venv_dir.is_dir():
+                for py_name in ("python3", "python", "python.exe"):
+                    candidate = venv_dir / bin_dir / py_name
+                    if candidate.is_file():
+                        return str(candidate)
+        if search == search.parent:
+            break
+        search = search.parent
+    return None
+
+
+def resolve_python(python_spec, script_path: Path) -> str:
+    """Resolve a python_location spec (str or list) to an executable path.
+
+    Items in the list are tried in order; the first match wins.
+    The special keyword ':venv:' triggers an upward search from the script
+    directory for a venv or .venv virtual environment.
+    Falls back to the system python3 / python if nothing matches.
+    """
+    items = python_spec if isinstance(python_spec, list) else [python_spec]
+    for item in items:
+        if item == VENV_KEYWORD:
+            found = _find_venv_python(script_path)
+            if found:
+                return found
+        else:
+            expanded = expand_path(item)
+            resolved = shutil.which(expanded)
+            if resolved:
+                return resolved
+            p = Path(expanded)
+            if p.is_file() and os.access(p, os.X_OK):
+                return str(p)
+    return shutil.which("python3") or shutil.which("python") or "python"
+
+
 def load_config():
     """Loads the TOML configuration and builds the command dictionary."""
     config_file = Path.home() / ".wk_config.toml"
@@ -55,9 +105,9 @@ def load_config():
         config = tomllib.load(f)
 
     settings = config.get("settings", {})
-    def_py = expand_path(
-        settings.get("python_location") or settings.get("default_python") or "python"
-    )
+    raw_py = settings.get("python") or "python"
+    # Normalise to list; expansion and venv search happen at resolve time.
+    def_py_spec = raw_py if isinstance(raw_py, list) else [raw_py]
 
     commands = {}
 
@@ -70,7 +120,7 @@ def load_config():
             commands[py_file.stem] = {
                 "path": str(py_file),
                 "method": "direct",
-                "python": def_py,
+                "python": def_py_spec,
             }
 
     # 2. Explicit Definitions (Explicit table)
@@ -86,10 +136,11 @@ def load_config():
         if base_name in commands and base_name != key:
             del commands[base_name]
 
+        py_val = val.get("python", def_py_spec)
         commands[key] = {
             "path": str(abs_path),
             "method": val.get("method", "direct"),
-            "python": expand_path(val.get("python", def_py)),
+            "python": py_val if isinstance(py_val, list) else [py_val],
         }
 
     # 3. Apply Overrides
@@ -100,7 +151,10 @@ def load_config():
             if "method" in val:
                 commands[key]["method"] = val["method"]
             if "python" in val:
-                commands[key]["python"] = expand_path(val["python"])
+                py_val = val["python"]
+                commands[key]["python"] = (
+                    py_val if isinstance(py_val, list) else [py_val]
+                )
 
     # 4. Process Aliases
     for alias, target in config.get("aliases", {}).items():
@@ -113,7 +167,7 @@ def load_config():
 def run_pym(script_dict, dry_run, script_args):
     """Runs the script as a module if 'src' is found in the path hierarchy."""
     abs_script = Path(script_dict["path"]).resolve()
-    python_bin = shutil.which(script_dict["python"]) or script_dict["python"]
+    python_bin = resolve_python(script_dict["python"], abs_script)
 
     pkg_root = abs_script
     found_src = False
@@ -184,11 +238,15 @@ def print_help(commands):
 
 
 def print_command_info(key, script_dict):
+    py_spec = script_dict["python"]
+    py_display = " → ".join(py_spec) if isinstance(py_spec, list) else py_spec
+    resolved = resolve_python(py_spec, Path(script_dict["path"]).resolve())
     print(
-        f"Command : {key}\n"
-        f"  Path  : {script_dict['path']}\n"
-        f"  Python: {script_dict['python']}\n"
-        f"  Method: {script_dict['method']}"
+        f"Command  : {key}\n"
+        f"  Path     : {script_dict['path']}\n"
+        f"  Python   : {py_display}\n"
+        f"  Resolved : {resolved}\n"
+        f"  Method   : {script_dict['method']}"
     )
 
 
@@ -199,6 +257,27 @@ def main():
     if "--_complete" in args:
         commands = load_config()
         print(" ".join(commands.keys()))
+        sys.exit(0)
+
+    # Diagnostic: print the resolved Python for a given script path
+    # Usage: wk_core.py --_resolve-python /path/to/script.py
+    if len(args) >= 2 and args[0] == "--_resolve-python":
+        script_path = Path(args[1]).resolve()
+        commands = load_config()
+        # Find a registered command matching this path, or fall back to settings spec
+        spec = None
+        for cmd in commands.values():
+            if Path(cmd["path"]).resolve() == script_path:
+                spec = cmd["python"]
+                break
+        if spec is None:
+            # Not a registered script — use the default spec from settings
+            config_file = Path.home() / ".wk_config.toml"
+            with open(config_file, "rb") as f:
+                cfg = tomllib.load(f)
+            raw = cfg.get("settings", {}).get("python") or "python"
+            spec = raw if isinstance(raw, list) else [raw]
+        print(resolve_python(spec, script_path))
         sys.exit(0)
 
     dry_run = "--dry-run" in args
@@ -240,7 +319,8 @@ def main():
         run_pym(script_dict, dry_run, args)
     else:
         # Standard direct run
-        python_bin = shutil.which(script_dict["python"]) or script_dict["python"]
+        abs_script = Path(script_dict["path"]).resolve()
+        python_bin = resolve_python(script_dict["python"], abs_script)
         cmd = [python_bin, script_dict["path"]] + args
         if dry_run:
             print(
