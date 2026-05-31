@@ -4,7 +4,7 @@ import os
 import sys
 from pathlib import Path
 
-from visidata import CsvSheet, VisiData
+from visidata import CsvSheet, VisiData, Progress, options
 
 sys.path.extend(
     [
@@ -62,3 +62,14 @@ class DatSheet(CsvSheet):
 @VisiData.api
 def open_dat(vs_, p):
     return DatSheet(p.name, sourcePath=p)
+
+
+@VisiData.api
+def save_dat(vd, p, sheet):
+    """Save as .dat file (CSV without header row)."""
+    with p.open(mode="w", encoding=sheet.options.save_encoding, newline="") as fp:
+        cw = csv.writer(fp, **options.getall("csv_"))
+        with Progress(gerund="saving", total=sheet.nRows) as prog:
+            for dispvals in sheet.iterdispvals(format=True):
+                cw.writerow(dispvals.values())
+                prog.addProgress(1)
