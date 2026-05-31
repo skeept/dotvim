@@ -1,11 +1,14 @@
 """Define a wrapper to run python scripts."""
 
 import os
-import sys
-import subprocess
-import tomllib
-from pathlib import Path
 import shutil
+import subprocess
+import sys
+from collections.abc import Iterator
+from pathlib import Path
+from typing import Any
+
+import tomllib
 
 # Special keyword in python_location lists: search upward from the script for a venv
 VENV_KEYWORD = ":venv:"
@@ -29,7 +32,10 @@ _SKIP_DIRS = {
 }
 
 
-def _iter_py_files(base_dir: Path):
+# wk-owned flags — only consumed when they appear *before* the command keyword
+_WK_FLAGS = frozenset({"--dry-run", "-v", "-i", "--info", "-h", "--help"})
+
+def _iter_py_files(base_dir: Path) -> Iterator[Path]:
     """Walk base_dir recursively, skipping noise directories."""
     for entry in base_dir.iterdir():
         if entry.is_dir():
@@ -39,11 +45,11 @@ def _iter_py_files(base_dir: Path):
             yield entry
 
 
-def expand_path(path_str):
-    """Expands ~ and environment variables in a path string."""
+def expand_path(path_str: str | None) -> str:
+    """Expand ~ and environment variables in a path string."""
     if not path_str:
         return ""
-    return os.path.expandvars(os.path.expanduser(path_str))
+    return os.path.expandvars(str(Path(path_str).expanduser()))
 
 
 def _find_venv_python(script_path: Path) -> str | None:
@@ -68,7 +74,7 @@ def _find_venv_python(script_path: Path) -> str | None:
     return None
 
 
-def resolve_python(python_spec, script_path: Path) -> str:
+def resolve_python(python_spec: str | list[str], script_path: Path) -> str:
     """Resolve a python_location spec (str or list) to an executable path.
 
     Items in the list are tried in order; the first match wins.
@@ -93,15 +99,15 @@ def resolve_python(python_spec, script_path: Path) -> str:
     return shutil.which("python3") or shutil.which("python") or "python"
 
 
-def load_config():
-    """Loads the TOML configuration and builds the command dictionary."""
+def load_config() -> dict[str, Any]:
+    """Load the TOML configuration and build the command dictionary."""
     config_file = Path.home() / ".wk_config.toml"
     if not config_file.is_file():
         print(f"Config file not found: {config_file}", file=sys.stderr)
         sys.exit(1)
 
     # tomllib requires the file to be opened in binary mode ("rb")
-    with open(config_file, "rb") as f:
+    with config_file.open("rb") as f:
         config = tomllib.load(f)
 
     settings = config.get("settings", {})
@@ -117,7 +123,16 @@ def load_config():
         if not base_dir.is_dir():
             continue
         for py_file in _iter_py_files(base_dir):
-            commands[py_file.stem] = {
+            key = py_file.stem.replace("_", "-")
+            if key in commands:
+                existing = commands[key]["path"]
+                print(
+                    f"Warning: name conflict '{key}' — '{existing}' vs '{py_file}'. "
+                    f"Rename one of them. Keeping the first.",
+                    file=sys.stderr,
+                )
+                continue
+            commands[key] = {
                 "path": str(py_file),
                 "method": "direct",
                 "python": def_py_spec,
@@ -164,8 +179,8 @@ def load_config():
     return commands
 
 
-def run_pym(script_dict, dry_run, script_args):
-    """Runs the script as a module if 'src' is found in the path hierarchy."""
+def run_pym(script_dict: dict[str, Any], dry_run: bool, script_args: list[str]) -> None:  # noqa: FBT001
+    """Run the script as a module if 'src' is found in the path hierarchy."""
     abs_script = Path(script_dict["path"]).resolve()
     python_bin = resolve_python(script_dict["python"], abs_script)
 
@@ -194,7 +209,7 @@ def run_pym(script_dict, dry_run, script_args):
             else str(pkg_root)
         )
 
-        cmd = [python_bin, "-m", module_str] + script_args
+        cmd = [python_bin, "-m", module_str, *script_args]
     else:
         # Run directly, but inject parent dir to PYTHONPATH
         parent_dir = abs_script.parent
@@ -205,7 +220,7 @@ def run_pym(script_dict, dry_run, script_args):
             else str(parent_dir)
         )
 
-        cmd = [python_bin, str(abs_script)] + script_args
+        cmd = [python_bin, str(abs_script), *script_args]
 
     if dry_run:
         env_str = f'PYTHONPATH="{env["PYTHONPATH"]}" '
@@ -216,28 +231,31 @@ def run_pym(script_dict, dry_run, script_args):
         return
 
     # Execute the command, replacing the current process context
-    subprocess.run(cmd, env=env)
+    subprocess.run(cmd, env=env, check=False)  # noqa: S603
 
 
-def print_help(commands):
+def print_help(commands: dict[str, Any]) -> None:
+    """Print usage information and list of registered commands."""
     config_file = Path.home() / ".wk_config.toml"
     print(
         "Usage: wk [--dry-run] [-v] <command> [args...]\n"
         "       wk -h | --help\n"
         "\n"
         "Flags:\n"
-        "  --dry-run   Print the resolved command without executing it.\n"
-        "  -v          Show details about a command (path, python, method) before running.\n"
-        "  -h, --help  Show this help message.\n"
+        "  --dry-run      Print the resolved command without executing it.\n"
+        "  -v             Show command details (path, python, method) before running.\n"
+        "  -i, --info     Show command details and exit without running.\n"
+        "  -h, --help     Show this help message.\n"
         "\n"
         f"Config file: {config_file}\n"
         f"Commands registered: {len(commands)}\n"
         "\n"
-        "Run 'wk' with no arguments to list all available commands."
+        "Run 'wk' with no arguments to list all available commands.",
     )
 
 
-def print_command_info(key, script_dict):
+def print_command_info(key: str, script_dict: dict[str, Any]) -> None:
+    """Print resolved details (path, python, method) for a single command."""
     py_spec = script_dict["python"]
     py_display = " → ".join(py_spec) if isinstance(py_spec, list) else py_spec
     resolved = resolve_python(py_spec, Path(script_dict["path"]).resolve())
@@ -246,11 +264,12 @@ def print_command_info(key, script_dict):
         f"  Path     : {script_dict['path']}\n"
         f"  Python   : {py_display}\n"
         f"  Resolved : {resolved}\n"
-        f"  Method   : {script_dict['method']}"
+        f"  Method   : {script_dict['method']}",
     )
 
 
-def main():
+def main() -> None:
+    """Parse CLI arguments and dispatch to the appropriate registered command."""
     args = sys.argv[1:]
 
     # Handle autocompletion request from bash/powershell
@@ -261,7 +280,7 @@ def main():
 
     # Diagnostic: print the resolved Python for a given script path
     # Usage: wk_core.py --_resolve-python /path/to/script.py
-    if len(args) >= 2 and args[0] == "--_resolve-python":
+    if len(args) >= 2 and args[0] == "--_resolve-python":  # noqa: PLR2004
         script_path = Path(args[1]).resolve()
         commands = load_config()
         # Find a registered command matching this path, or fall back to settings spec
@@ -273,26 +292,31 @@ def main():
         if spec is None:
             # Not a registered script — use the default spec from settings
             config_file = Path.home() / ".wk_config.toml"
-            with open(config_file, "rb") as f:
+            with config_file.open("rb") as f:
                 cfg = tomllib.load(f)
             raw = cfg.get("settings", {}).get("python") or "python"
             spec = raw if isinstance(raw, list) else [raw]
         print(resolve_python(spec, script_path))
         sys.exit(0)
 
-    dry_run = "--dry-run" in args
-    if dry_run:
-        args.remove("--dry-run")
+    # Consume wk flags only from the front of args.  Any flag that appears
+    # *after* the command keyword is left intact and forwarded to the script.
+    dry_run = False
+    verbose = False
+    info_only = False
 
-    verbose = "-v" in args
-    if verbose:
-        args.remove("-v")
-
-    # Help only when explicitly requested
-    if args and args[0] in ("-h", "--help"):
-        commands = load_config()
-        print_help(commands)
-        sys.exit(0)
+    while args and args[0] in _WK_FLAGS:
+        flag = args.pop(0)
+        if flag == "--dry-run":
+            dry_run = True
+        elif flag == "-v":
+            verbose = True
+        elif flag in ("-i", "--info"):
+            info_only = True
+        elif flag in ("-h", "--help"):
+            commands = load_config()
+            print_help(commands)
+            sys.exit(0)
 
     commands = load_config()
 
@@ -311,6 +335,10 @@ def main():
 
     script_dict = commands[key]
 
+    if info_only:
+        print_command_info(key, script_dict)
+        sys.exit(0)
+
     if verbose:
         print_command_info(key, script_dict)
         print()
@@ -321,14 +349,14 @@ def main():
         # Standard direct run
         abs_script = Path(script_dict["path"]).resolve()
         python_bin = resolve_python(script_dict["python"], abs_script)
-        cmd = [python_bin, script_dict["path"]] + args
+        cmd = [python_bin, script_dict["path"], *args]
         if dry_run:
             print(
                 "++ " + " ".join(f'"{c}"' if " " in c else c for c in cmd),
                 file=sys.stderr,
             )
         else:
-            subprocess.run(cmd)
+            subprocess.run(cmd, check=False)  # noqa: S603
 
 
 if __name__ == "__main__":

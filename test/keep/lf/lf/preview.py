@@ -9,8 +9,7 @@ DEBUG = False
 
 file, *others = sys.argv[1:]
 _, suffix = os.path.splitext(file.lower())
-if suffix.startswith("."):
-    suffix = suffix[1:]
+suffix = suffix.removeprefix(".")
 
 
 if DEBUG:

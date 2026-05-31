@@ -41,8 +41,9 @@ def _load_heavy():
 
     try:
         global rich
-        import rich
         import functools
+
+        import rich
 
         global ii
         ii = functools.partial(rich.inspect, methods=True)

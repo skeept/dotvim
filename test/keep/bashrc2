@@ -586,7 +586,7 @@ irr()
 {
   # define $WORK_BASE in ~/.bashrc.local
   # py "${WORK_BASE}/utils/src/run_irops.py" "$@"
-  wk run_irops "$@"
+  wk run-irops "$@"
 }
 
 if false; then
