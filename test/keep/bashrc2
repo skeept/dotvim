@@ -1238,6 +1238,64 @@ function tef() {
 function tei() {
     tmux split-window -h -- "nvim" "$@"
 }
+
+tlf() {
+    # 1. Dynamically read your existing environment variable
+    if [ -z "$LF_CONFIG_HOME" ]; then
+        echo "Error: \$LF_CONFIG_HOME is not set." >&2
+        return 1
+    fi
+
+    local config_base="$LF_CONFIG_HOME/lf/lfrc"
+
+    if [ ! -f "$config_base" ]; then
+        echo "Error: Could not find lfrc at $config_base" >&2
+        return 1
+    fi
+
+    # 2. Parse folder arguments
+    # dir1 defaults to current folder. dir2 defaults to dir1 if a second path isn't provided.
+    local dir1="${1:-$(pwd)}"
+    local dir2="${2:-$dir1}"
+
+    # Convert paths to absolute formats so TMUX resolves them correctly
+    dir1=$(realpath "$dir1")
+    dir2=$(realpath "$dir2")
+
+    # 3. Create the temporary config file for the overrides
+    local tmp_config
+    tmp_config=$(mktemp /tmp/lf-dual-XXXXXX)
+
+    cat "$config_base" > "$tmp_config"
+    cat << 'EOF' >> "$tmp_config"
+
+# --- Dual-Pane Mode Overrides ---
+set nopreview
+set ratios 1
+set info size:time
+
+# Custom quit mapping: hitting 'q' kills the entire tmux window (both panes)
+map q $tmux kill-window
+EOF
+
+    # Standard command execution string
+    local run_cmd="lf -config '$tmp_config'"
+
+    # 4. Smart TMUX session/window spawning utilizing distinct directories
+    if [ -n "$TMUX" ]; then
+        # Inside TMUX: Open a new window at dir1, then split it open at dir2
+        tmux new-window -c "$dir1" -n "lf-dual" "bash -c \"$run_cmd\""
+        tmux split-window -h -c "$dir2" -t "lf-dual" "bash -c \"$run_cmd\""
+    else
+        # NOT inside TMUX: Initialize session at dir1, split at dir2, then attach
+        tmux new-session -d -c "$dir1" -s "lf-dual" "bash -c \"$run_cmd\""
+        tmux split-window -h -c "$dir2" -t "lf-dual" "bash -c \"$run_cmd\""
+        tmux attach-session -t "lf-dual"
+    fi
+
+    # 5. Background cleanup
+    (sleep 1.5 && rm -f "$tmp_config") &
+}
 ##### tmux utility functions }}
 
 
