@@ -1266,7 +1266,7 @@ tlf() {
     local tmp_config
     tmp_config=$(mktemp /tmp/lf-dual-XXXXXX)
 
-    cat "$config_base" > "$tmp_config"
+    cat "$config_base" >| "$tmp_config"
     cat << 'EOF' >> "$tmp_config"
 
 # --- Dual-Pane Mode Overrides ---
