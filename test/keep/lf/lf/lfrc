@@ -71,7 +71,7 @@ map yd &{{ (Get-Item $env:f).DirectoryName | clip.exe }}
 map v
 map vv invert
 map ve $nvim $env:f
-map vd $wsl -e visidata (wslpath $env:f)
+map vd $wsl -e /home/sabre/.local/bin/visidata (wsl wslpath ($env:f.Replace('\', '/')))
 
 # ------------------------------------------------------------------------------
 # CUSTOM COMMANDS
@@ -148,7 +148,7 @@ cmd on-cd &{{
     }
 
     $fmt = ($fmt -split "`r?`n" -join "") -replace "\\", "\\" -replace '"', '\"' -replace "%", "%%"
-    
+
     lf -remote "send $env:id set promptfmt `"$fmt`""
 }}
 
