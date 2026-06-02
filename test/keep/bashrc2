@@ -1276,6 +1276,9 @@ set info size:time
 
 # Custom quit mapping: hitting 'q' kills the entire tmux window (both panes)
 map q $tmux kill-window
+
+# Custom pane switching: hitting Tab jumps to the other tmux split
+map <tab> &tmux select-pane -t :.+
 EOF
 
     # Standard command execution string
