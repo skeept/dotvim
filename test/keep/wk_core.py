@@ -33,7 +33,8 @@ _SKIP_DIRS = {
 
 
 # wk-owned flags — only consumed when they appear *before* the command keyword
-_WK_FLAGS = frozenset({"--dry-run", "-v", "-i", "--info", "-h", "--help"})
+_WK_FLAGS = frozenset({"--dry-run", "-v", "--verbose", "-i", "--info", "-h", "--help"})
+
 
 def _iter_py_files(base_dir: Path) -> Iterator[Path]:
     """Walk base_dir recursively, skipping noise directories."""
@@ -99,26 +100,11 @@ def resolve_python(python_spec: str | list[str], script_path: Path) -> str:
     return shutil.which("python3") or shutil.which("python") or "python"
 
 
-def load_config() -> dict[str, Any]:
-    """Load the TOML configuration and build the command dictionary."""
-    config_file = Path.home() / ".wk_config.toml"
-    if not config_file.is_file():
-        print(f"Config file not found: {config_file}", file=sys.stderr)
-        sys.exit(1)
-
-    # tomllib requires the file to be opened in binary mode ("rb")
-    with config_file.open("rb") as f:
-        config = tomllib.load(f)
-
-    settings = config.get("settings", {})
-    raw_py = settings.get("python") or "python"
-    # Normalise to list; expansion and venv search happen at resolve time.
-    def_py_spec = raw_py if isinstance(raw_py, list) else [raw_py]
-
-    commands = {}
-
-    # 1. Recursive Scan (Folders array)
-    for folder in config.get("folders", []):
+def _process_folders(
+    folders: list[str], def_py_spec: list[str], commands: dict[str, Any],
+) -> None:
+    """Recursively scan defined folders for discoverable scripts."""
+    for folder in folders:
         base_dir = Path(expand_path(folder))
         if not base_dir.is_dir():
             continue
@@ -138,8 +124,12 @@ def load_config() -> dict[str, Any]:
                 "python": def_py_spec,
             }
 
-    # 2. Explicit Definitions (Explicit table)
-    for key, val in config.get("explicit", {}).items():
+
+def _process_explicit(
+    explicit: dict[str, Any], def_py_spec: list[str], commands: dict[str, Any],
+) -> None:
+    """Parse explicitly declared commands from the configuration file."""
+    for key, val in explicit.items():
         raw_path = val.get("path", "")
         if not raw_path:
             continue
@@ -147,7 +137,6 @@ def load_config() -> dict[str, Any]:
         abs_path = Path(expand_path(raw_path))
         base_name = abs_path.stem
 
-        # Clear auto-discovered entry if it conflicts with a custom named definition
         if base_name in commands and base_name != key:
             del commands[base_name]
 
@@ -158,23 +147,45 @@ def load_config() -> dict[str, Any]:
             "python": py_val if isinstance(py_val, list) else [py_val],
         }
 
-    # 3. Apply Overrides
-    for key, val in config.get("overrides", {}).items():
-        if val is None:
-            continue
-        if key in commands:
-            if "method" in val:
-                commands[key]["method"] = val["method"]
-            if "python" in val:
-                py_val = val["python"]
-                commands[key]["python"] = (
-                    py_val if isinstance(py_val, list) else [py_val]
-                )
 
-    # 4. Process Aliases
-    for alias, target in config.get("aliases", {}).items():
+def _process_overrides(overrides: dict[str, Any], commands: dict[str, Any]) -> None:
+    """Apply specific runtime methods or python spec overrides."""
+    for key, val in overrides.items():
+        if val is None or key not in commands:
+            continue
+        if "method" in val:
+            commands[key]["method"] = val["method"]
+        if "python" in val:
+            py_val = val["python"]
+            commands[key]["python"] = py_val if isinstance(py_val, list) else [py_val]
+
+
+def _process_aliases(aliases: dict[str, str], commands: dict[str, Any]) -> None:
+    """Map operational command aliases to target descriptors."""
+    for alias, target in aliases.items():
         if target in commands:
             commands[alias] = dict(commands[target])
+
+
+def load_config() -> dict[str, Any]:
+    """Load the TOML configuration and build the command dictionary."""
+    config_file = Path.home() / ".wk_config.toml"
+    if not config_file.is_file():
+        print(f"Config file not found: {config_file}", file=sys.stderr)
+        sys.exit(1)
+
+    with config_file.open("rb") as f:
+        config = tomllib.load(f)
+
+    settings = config.get("settings", {})
+    raw_py = settings.get("python") or "python"
+    def_py_spec = raw_py if isinstance(raw_py, list) else [raw_py]
+
+    commands: dict[str, Any] = {}
+    _process_folders(config.get("folders", []), def_py_spec, commands)
+    _process_explicit(config.get("explicit", {}), def_py_spec, commands)
+    _process_overrides(config.get("overrides", {}), commands)
+    _process_aliases(config.get("aliases", {}), commands)
 
     return commands
 
@@ -187,7 +198,6 @@ def run_pym(script_dict: dict[str, Any], dry_run: bool, script_args: list[str]) 
     pkg_root = abs_script
     found_src = False
 
-    # Upward search for 'src' folder
     while pkg_root != pkg_root.parent:
         if pkg_root.name == "src":
             found_src = True
@@ -197,21 +207,16 @@ def run_pym(script_dict: dict[str, Any], dry_run: bool, script_args: list[str]) 
     env = os.environ.copy()
 
     if found_src:
-        # Run as module (-m)
         module_path = abs_script.relative_to(pkg_root).with_suffix("")
         module_str = str(module_path).replace(os.sep, ".")
-
-        # Prepend src dir to PYTHONPATH
         curr_pythonpath = env.get("PYTHONPATH", "")
         env["PYTHONPATH"] = (
             f"{pkg_root}{os.pathsep}{curr_pythonpath}"
             if curr_pythonpath
             else str(pkg_root)
         )
-
         cmd = [python_bin, "-m", module_str, *script_args]
     else:
-        # Run directly, but inject parent dir to PYTHONPATH
         parent_dir = abs_script.parent
         curr_pythonpath = env.get("PYTHONPATH", "")
         env["PYTHONPATH"] = (
@@ -219,7 +224,6 @@ def run_pym(script_dict: dict[str, Any], dry_run: bool, script_args: list[str]) 
             if curr_pythonpath
             else str(parent_dir)
         )
-
         cmd = [python_bin, str(abs_script), *script_args]
 
     if dry_run:
@@ -230,8 +234,25 @@ def run_pym(script_dict: dict[str, Any], dry_run: bool, script_args: list[str]) 
         )
         return
 
-    # Execute the command, replacing the current process context
     subprocess.run(cmd, env=env, check=False)  # noqa: S603
+
+
+def run_bash(
+    script_dict: dict[str, Any], dry_run: bool, script_args: list[str],
+) -> None:
+    """Run a bash script explicitly using the system bash interpreter."""
+    abs_script = Path(script_dict["path"]).resolve()
+    bash_bin = shutil.which("bash") or "bash"
+    cmd = [bash_bin, str(abs_script), *script_args]
+
+    if dry_run:
+        print(
+            "++ " + " ".join(f'"{c}"' if " " in c else c for c in cmd),
+            file=sys.stderr,
+        )
+        return
+
+    subprocess.run(cmd, check=False)  # noqa: S603
 
 
 def print_help(commands: dict[str, Any]) -> None:
@@ -243,7 +264,7 @@ def print_help(commands: dict[str, Any]) -> None:
         "\n"
         "Flags:\n"
         "  --dry-run      Print the resolved command without executing it.\n"
-        "  -v             Show command details (path, python, method) before running.\n"
+        "  -v, --verbose  Show command details (path, python, method) before running.\n"
         "  -i, --info     Show command details and exit without running.\n"
         "  -h, --help     Show this help message.\n"
         "\n"
@@ -255,42 +276,49 @@ def print_help(commands: dict[str, Any]) -> None:
 
 
 def print_command_info(key: str, script_dict: dict[str, Any]) -> None:
-    """Print resolved details (path, python, method) for a single command."""
-    py_spec = script_dict["python"]
-    py_display = " → ".join(py_spec) if isinstance(py_spec, list) else py_spec
-    resolved = resolve_python(py_spec, Path(script_dict["path"]).resolve())
-    print(
-        f"Command  : {key}\n"
-        f"  Path     : {script_dict['path']}\n"
-        f"  Python   : {py_display}\n"
-        f"  Resolved : {resolved}\n"
-        f"  Method   : {script_dict['method']}",
-    )
+    """Print details (path, interpreter/python, method) for a single command."""
+    method = script_dict["method"]
+
+    if method == "bash":
+        bash_bin = shutil.which("bash") or "bash"
+        print(
+            f"Command  : {key}\n"
+            f"  Path     : {script_dict['path']}\n"
+            f"  Resolved : {bash_bin}\n"
+            f"  Method   : {method}",
+        )
+    else:
+        py_spec = script_dict["python"]
+        py_display = " → ".join(py_spec) if isinstance(py_spec, list) else py_spec
+        resolved = resolve_python(py_spec, Path(script_dict["path"]).resolve())
+        print(
+            f"Command  : {key}\n"
+            f"  Path     : {script_dict['path']}\n"
+            f"  Python   : {py_display}\n"
+            f"  Resolved : {resolved}\n"
+            f"  Method   : {method}",
+        )
 
 
-def main() -> None:
-    """Parse CLI arguments and dispatch to the appropriate registered command."""
-    args = sys.argv[1:]
-
-    # Handle autocompletion request from bash/powershell
+def _handle_autocomplete(args: list[str]) -> None:
+    """Process autocompletion requests early."""
     if "--_complete" in args:
         commands = load_config()
         print(" ".join(commands.keys()))
         sys.exit(0)
 
-    # Diagnostic: print the resolved Python for a given script path
-    # Usage: wk_core.py --_resolve-python /path/to/script.py
+
+def _handle_resolve_python(args: list[str]) -> None:
+    """Handle internal diagnostic path evaluation commands."""
     if len(args) >= 2 and args[0] == "--_resolve-python":  # noqa: PLR2004
         script_path = Path(args[1]).resolve()
         commands = load_config()
-        # Find a registered command matching this path, or fall back to settings spec
         spec = None
         for cmd in commands.values():
             if Path(cmd["path"]).resolve() == script_path:
                 spec = cmd["python"]
                 break
         if spec is None:
-            # Not a registered script — use the default spec from settings
             config_file = Path.home() / ".wk_config.toml"
             with config_file.open("rb") as f:
                 cfg = tomllib.load(f)
@@ -299,8 +327,9 @@ def main() -> None:
         print(resolve_python(spec, script_path))
         sys.exit(0)
 
-    # Consume wk flags only from the front of args.  Any flag that appears
-    # *after* the command keyword is left intact and forwarded to the script.
+
+def _consume_flags(args: list[str]) -> tuple[bool, bool, bool]:
+    """Parse and consume leading wrapper execution flags."""
     dry_run = False
     verbose = False
     info_only = False
@@ -309,7 +338,7 @@ def main() -> None:
         flag = args.pop(0)
         if flag == "--dry-run":
             dry_run = True
-        elif flag == "-v":
+        elif flag in ("-v", "--verbose"):
             verbose = True
         elif flag in ("-i", "--info"):
             info_only = True
@@ -317,6 +346,52 @@ def main() -> None:
             commands = load_config()
             print_help(commands)
             sys.exit(0)
+
+    return dry_run, verbose, info_only
+
+
+def _dispatch_command(
+    key: str,
+    script_dict: dict[str, Any],
+    dry_run: bool,
+    verbose: bool,
+    info_only: bool,
+    args: list[str],
+) -> None:
+    """Dispatch tracking profiles and execute the matched command payload."""
+    if info_only:
+        print_command_info(key, script_dict)
+        sys.exit(0)
+
+    if verbose:
+        print_command_info(key, script_dict)
+        print()
+
+    if script_dict["method"] == "pym":
+        run_pym(script_dict, dry_run, args)
+    elif script_dict["method"] == "bash":
+        run_bash(script_dict, dry_run, args)
+    else:
+        abs_script = Path(script_dict["path"]).resolve()
+        python_bin = resolve_python(script_dict["python"], abs_script)
+        cmd = [python_bin, script_dict["path"], *args]
+        if dry_run:
+            print(
+                "++ " + " ".join(f'"{c}"' if " " in c else c for c in cmd),
+                file=sys.stderr,
+            )
+        else:
+            subprocess.run(cmd, check=False)  # noqa: S603
+
+
+def main() -> None:
+    """Parse CLI arguments and dispatch to the appropriate registered command."""
+    args = sys.argv[1:]
+
+    _handle_autocomplete(args)
+    _handle_resolve_python(args)
+
+    dry_run, verbose, info_only = _consume_flags(args)
 
     commands = load_config()
 
@@ -333,30 +408,7 @@ def main() -> None:
         print(f"Script '{key}' not found.", file=sys.stderr)
         sys.exit(1)
 
-    script_dict = commands[key]
-
-    if info_only:
-        print_command_info(key, script_dict)
-        sys.exit(0)
-
-    if verbose:
-        print_command_info(key, script_dict)
-        print()
-
-    if script_dict["method"] == "pym":
-        run_pym(script_dict, dry_run, args)
-    else:
-        # Standard direct run
-        abs_script = Path(script_dict["path"]).resolve()
-        python_bin = resolve_python(script_dict["python"], abs_script)
-        cmd = [python_bin, script_dict["path"], *args]
-        if dry_run:
-            print(
-                "++ " + " ".join(f'"{c}"' if " " in c else c for c in cmd),
-                file=sys.stderr,
-            )
-        else:
-            subprocess.run(cmd, check=False)  # noqa: S603
+    _dispatch_command(key, commands[key], dry_run, verbose, info_only, args)
 
 
 if __name__ == "__main__":
