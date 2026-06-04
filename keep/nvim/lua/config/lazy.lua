@@ -25,7 +25,7 @@ if is_rhel8 then
   vim.schedule(function()
     vim.notify(
       "Detected RHEL8 (glibc 2.28) — disabling Tree-sitter to avoid GLIBC errors.",
-      vim.log.levels.WARN
+      vim.log.levels.DEBUG
     )
   end)
 end
