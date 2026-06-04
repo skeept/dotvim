@@ -1,6 +1,6 @@
 function wk() {
   # Requires Python 3.11+ for tomllib.
-  python3 "${CONFIG_HOME}/wk_core.py" "$@"
+  py "${CONFIG_HOME}/wk_core.py" "$@"
 }
 
 # Cached completion list; invalidated when config mtime changes
