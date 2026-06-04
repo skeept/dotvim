@@ -4,6 +4,8 @@
 # sudo yum install
 #
 # check the right command
+# nix profile install nixpkgs#zig
+# nix profile install nixpkgs#rustc nixpkgs#cargo
 
 # use zig wrapper
 export PATH=~/bin/fff_fix:${PATH}
