@@ -20,7 +20,7 @@ vim.opt.rtp:prepend(lazypath)
 -- ───────────────────────────────────────────────────────────────
 local uname = vim.uv.os_uname()
 local is_rhel8 = uname.release:match("el8") or uname.version:match("glibc 2%.28")
-local WARN_LIBC_ISSUE = false
+local WARN_LIBC_ISSUE = math.random(0, 15) == 0
 
 if is_rhel8 and WARN_LIBC_ISSUE then
   vim.schedule(function()
