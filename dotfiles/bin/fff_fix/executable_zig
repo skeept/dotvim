@@ -2,7 +2,7 @@
 NEW_ARGS=()
 SKIP_NEXT=false
 
-REAL_ZIG=/mnt/disks/data/ark-research-svcdel/.nix-profile/bin/zig
+REAL_ZIG=$HOME/.nix-profile/bin/zig
 
 # Intercept and swap out modern targets for RHEL 8 glibc 2.28
 for ((i = 1; i <= $#; i++)); do
