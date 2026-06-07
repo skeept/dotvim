@@ -9,7 +9,6 @@ import shutil
 import subprocess
 import typing
 from pathlib import Path
-from typing import Optional
 
 GLOBAL_SKIP = [".git", ".ruff_cache"]
 
@@ -32,7 +31,7 @@ class FolderConfig:
     skip: list[str] = dataclasses.field(default_factory=list)
 
     @classmethod
-    def nvim(cls, windows: Optional[bool] = None):
+    def nvim(cls, windows: bool | None = None):
         """Get nvim config.
         windows option is to force windows path (e.g. for WSL).
         """
@@ -100,7 +99,6 @@ def copy_files(
     diff_tool: str = "delta",
 ) -> None:
     """Assume folders and copy nested files."""
-    
     # If dry_run is True, we generally want to see diffs unless explicitly set to 'none'
     # logic handled by caller passing appropriate diff_tool string
 
@@ -118,7 +116,7 @@ def copy_files(
 
         if display_all or status != CmpStatus.same:
             print(f"{status.name:<7} {elem!s:<50} => {target}")
-            
+
             if status == CmpStatus.diff:
                 run_diff(diff_tool, elem, target)
 
@@ -137,16 +135,33 @@ def copy_files(
 def main() -> None:
     """Set args and copy."""
     default_tool = "difft"
-    parser = argparse.ArgumentParser("copy files from folder.")
-    parser.add_argument(
-        "-o",
-        "--other-direction",
-        help="reverse copy destination",
-        action="store_true",
+    parser = argparse.ArgumentParser(
+        description="Synchronize Neovim configurations safely.",
     )
-    parser.add_argument("-c", "--copy", action="store_true", help="copy the files")
-    
-    # Updated -d argument
+
+    # Create a mutually exclusive group so you MUST pick either save or update
+    action_group = parser.add_mutually_exclusive_group(required=True)
+    action_group.add_argument(
+        "-s",
+        "--save",
+        action="store_true",
+        help="Save current config state from ~/.config/nvim to this repo folder",
+    )
+    action_group.add_argument(
+        "-u",
+        "--update",
+        action="store_true",
+        help="Update live ~/.config/nvim using this repo's files",
+    )
+
+    # Replaces the old "-c" flag with something more explicit
+    parser.add_argument(
+        "-a",
+        "--apply",
+        action="store_true",
+        help="Actually execute the copy operation. Without this, it defaults to a dry-run.",
+    )
+
     parser.add_argument(
         "-d",
         "--diff-tool",
@@ -154,7 +169,7 @@ def main() -> None:
         default=default_tool,
         help=f"Select diff tool (default: {default_tool}). Use 'none' to hide diffs.",
     )
-    
+
     parser.add_argument(
         "-w",
         "--windows",
@@ -163,20 +178,20 @@ def main() -> None:
         default=None,
     )
     args = parser.parse_args()
-    
+
     nvim = FolderConfig.nvim(args.windows)
-    origin, dest, _ = (
-        dataclasses.astuple(nvim)
-        if args.other_direction
-        else dataclasses.astuple(nvim.flip())
-    )
-    
-    dry_run = not args.copy
-    
-    # If copying (not dry run), you might want to suppress diffs by default 
-    # unless user explicitly asked for a tool. 
-    # For now, it respects the -d argument regardless of dry_run status.
-    
+
+    # Explicitly set the source and destination based on the operation
+    if args.save:
+        origin = nvim.actual  # ~/.config/nvim
+        dest = nvim.local  # ./nvim
+    else:  # args.update
+        origin = nvim.local  # ./nvim
+        dest = nvim.actual  # ~/.config/nvim
+
+    # Run as a dry-run unless --apply is explicitly passed
+    dry_run = not args.apply
+
     copy_files(
         origin,
         dest,

@@ -118,4 +118,40 @@ function M.quote_comma_join(opts)
   vim.api.nvim_buf_set_lines(0, start_line - 1, end_line, false, { final_line })
 end
 
+function M.close_tab_or_exit(idx)
+  if idx == 0 then
+    vim.cmd("wall")
+  end
+
+  local is_diff = vim.wo.diff
+  local is_dirdiff = false
+
+  local current_tab = vim.api.nvim_get_current_tabpage()
+  local windows = vim.api.nvim_tabpage_list_wins(current_tab)
+
+  for _, win in ipairs(windows) do
+    local bufnr = vim.api.nvim_win_get_buf(win)
+    local has_var, _ = pcall(vim.api.nvim_buf_get_var, bufnr, "currentDiff")
+    if has_var then
+      is_dirdiff = true
+      break
+    end
+  end
+
+  local total_tabs = #vim.api.nvim_list_tabpages()
+  local win_count_in_tab = #windows
+
+  if total_tabs > 1 then
+    if win_count_in_tab == 1 then
+      vim.cmd("xit")
+    else
+      vim.cmd("tabclose")
+    end
+  elseif is_diff or is_dirdiff then
+    vim.cmd("qall")
+  else
+    vim.cmd("xit")
+  end
+end
+
 return M

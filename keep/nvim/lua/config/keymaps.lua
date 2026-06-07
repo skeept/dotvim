@@ -18,8 +18,8 @@ vim.keymap.set("n", "gy", "m`^yg_``", { noremap = true, desc = "Yank inner line 
 -- gY: yank from cursor to end of line (no newline)
 vim.keymap.set("n", "gY", "yg_", { noremap = true, desc = "Yank to end of line" })
 
-vim.keymap.set({ "n", "v" }, "<F4>", ":x<CR>", { noremap = true })
-vim.keymap.set("i", "<F4>", "<C-O>:x<CR>", { noremap = true })
+-- vim.keymap.set({ "n", "v" }, "<F4>", ":x<CR>", { noremap = true })
+-- vim.keymap.set("i", "<F4>", "<C-O>:x<CR>", { noremap = true })
 
 vim.api.nvim_create_user_command("DelTrailingSpace", function()
   vim.cmd([[%s/\s\+$//e]])
@@ -96,7 +96,9 @@ wk.add({
   -- fff (fast fuzzy finder) — lowercase
   {
     ",ff",
-    function() require("fff").find_files() end,
+    function()
+      require("fff").find_files()
+    end,
     desc = "fff: files",
   },
   {
@@ -109,11 +111,13 @@ wk.add({
   },
   {
     ",fg",
-    function() require("fff").live_grep() end,
+    function()
+      require("fff").live_grep()
+    end,
     desc = "fff: grep",
   },
   {
-    ",fG",  -- override: fff project root grep (fzf grep_project moved to ,fG below)
+    ",fG", -- override: fff project root grep (fzf grep_project moved to ,fG below)
     function()
       local root = vim.fs.root(0, ".git") or vim.fn.getcwd()
       require("fff").live_grep({ cwd = root })
@@ -122,19 +126,25 @@ wk.add({
   },
   {
     ",fz",
-    function() require("fff").live_grep({ grep = { modes = { "fuzzy", "plain" } } }) end,
+    function()
+      require("fff").live_grep({ grep = { modes = { "fuzzy", "plain" } } })
+    end,
     desc = "fff: fuzzy grep",
   },
   {
     ",fw",
-    function() require("fff").live_grep({ query = vim.fn.expand("<cword>") }) end,
+    function()
+      require("fff").live_grep({ query = vim.fn.expand("<cword>") })
+    end,
     desc = "fff: grep word under cursor",
   },
   -- fzf-lua — uppercase for overlapping operations
   { ",fF", "<cmd>FzfLua files<cr>", desc = "fzf: files" },
   {
     ",fP",
-    function() require("fzf-lua").grep_project() end,
+    function()
+      require("fzf-lua").grep_project()
+    end,
     desc = "fzf: grep project",
   },
   {
@@ -176,3 +186,12 @@ vim.keymap.set("n", ",cD", function()
   local count = vim.v.count
   vim.cmd("ChgDirCurrFileFolder! " .. count)
 end, { desc = "Change to current file's directory (global)" })
+
+vim.keymap.set({ "n", "v", "o" }, "<F4>", function()
+  require("wk.utils").close_tab_or_exit(vim.v.count)
+end, { silent = true, desc = "Close tab or exit" })
+
+vim.keymap.set("i", "<F4>", function()
+  vim.cmd("stopinsert")
+  require("wk.utils").close_tab_or_exit(vim.v.count)
+end, { silent = true, desc = "Close tab or exit from insert mode" })
