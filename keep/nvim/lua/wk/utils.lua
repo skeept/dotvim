@@ -44,13 +44,30 @@ function M.setup()
         { silent = true, desc = "Calculate hours/minutes" }
       )
 
-      vim.keymap.set("n", "<S-F9>", ":HoursMinutes ", { desc = "Edit hours/minutes calculation" })
-      vim.keymap.set("i", "<S-F8>", "<C-R>=3600*", { desc = "Insert 3600*" })
-      vim.keymap.set("n", "<S-F8>", "ciw<C-R>=3600*", { desc = "Replace word with 3600*" })
+      vim.keymap.set(
+        "i",
+        "<F8>",
+        "<C-o>ciw<C-R>=3600*",
+        { desc = "Replace current word with 3600*" }
+      )
+      vim.keymap.set("n", "<F8>", "ciw<C-R>=3600*", { desc = "Replace word with 3600*" })
 
-      -- Set flag to true so this block never runs again
       hours_minutes_keymaps_set = true
-      vim.notify("HoursMinutes keymaps initialized.", vim.log.levels.INFO)
+      -- Set flag to true so this block never runs again
+
+      -- Format a scannable message showing the new layout
+      local msg = table.concat({
+        "HoursMinutes Mode Active! Mappings loaded:",
+        "  <F9> (Normal) → Calculate word under cursor",
+        "  <F8> (Normal) → Change word to '3600*'",
+        "  <F8> (Insert) → Insert '3600*' calculations",
+      }, "\n")
+
+      -- Notify with a 2-second (2000ms) duration wrapper
+      vim.notify(msg, vim.log.levels.INFO, {
+        title = "HoursMinutes Setup",
+        timeout = 3000,
+      })
     end
 
     -- Run the actual command logic
