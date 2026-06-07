@@ -712,13 +712,23 @@ function ef()
 eg()
 {
   # does nvim support opening in same window?
-  gvi -nvim $@
+  gvi -nvim "$@"
 }
 
 
 efg()
 {
   gvi -nvim "$(zp2 $@)"
+}
+
+nqq()
+{
+  nvim-qt "$@"
+}
+
+nq()
+{
+    nvim-qt "$(zp2 $@)"
 }
 ### NVIM END
 
