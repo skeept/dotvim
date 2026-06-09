@@ -55,6 +55,8 @@ function mtimer()
   MTIMER_LAST=$(date +%s%3N)
 }
 
+_et="" # used in edits
+
 mtimer right after start
 
 # colors
@@ -515,11 +517,6 @@ vs()
   __imp_v S "$@"
 }
 
-vt()
-{
-  __imp_v T "$@"
-}
-
 g()
 {
   local first_arg="$([ -z "$1" ] && echo -n status || echo -n $1 )"
@@ -649,37 +646,63 @@ function zp2()
   fi
 }
 
-function ve()
-{
-  for fname in "$@"; do
-    if [ -e "${fname}" ]; then
-      __imp_v X "$@"
-      return $?
+# ------------------------------------------------------------------------------
+# Core Target Resolver Helper
+# ------------------------------------------------------------------------------
+resolve_editor_target() {
+    # Check if all passed paths explicitly exist on disk (handles single files, dots, or groups)
+    local all_exist=true
+    for arg in "$@"; do
+        if [ ! -e "$arg" ]; then
+            all_exist=false
+            break
+        fi
+    done
+
+    # If everything exists, bypass FZF entirely and return the raw targets
+    if [ "$all_exist" = true ] && [ $# -gt 0 ]; then
+        echo "$@"
+        return 0
     fi
-  done
 
-  if (type fzf >& /dev/null); then name="$(zp $@)"; else name=$@; fi
-  [ -n "${name}" ] && __imp_v X "${name}"
+    # Otherwise, spin up the fuzzy finder pipeline
+    local query="$*"
+    local select1=()
+    if [ -n "$query" ]; then
+        select1=(--exit-0 --select-1 -q "$query")
+    fi
+
+    local preview_cmd="head -n 500 {}"
+    command -v bat &>/dev/null && preview_cmd="bat --style=plain --color=always --line-range :500 {}"
+
+    local result
+    result=$(fd --type f --hidden --follow \
+        --exclude .git -E .venv -E __pycache__ -E node_modules . 2>/dev/null \
+        | fzf --preview "$preview_cmd" "${select1[@]}")
+
+    # Catch Escape / Cancel abort conditions cleanly
+    if [ -z "$result" ]; then
+        return 1
+    fi
+
+    echo "$result"
+    return 0
 }
 
-function vv
-{
-  echo "start using ve"
+function ve() {
+    _et=$(resolve_editor_target "$@") && __imp_v X "$_et"
 }
 
-function vn()
-{
-  for fname in "$@"; do
-    if [ -e "${fname}" ]; then __imp_v N "$@"; return $?; fi
-  done
-
-  if (type fzf >& /dev/null); then name="$(zp $@)"; else name=$@; fi
-  [ -n "${name}" ] && __imp_v N "${name}"
+function vn() {
+    _et=$(resolve_editor_target "$@") && __imp_v N "$_et"
 }
 
-function vp()
-{
-  ei $(zp2 $@)
+function vt() {
+    _et=$(resolve_editor_target "$@") && __imp_v T "$_et"
+}
+
+function vp() {
+    _et=$(resolve_editor_target "$@") && ei "$_et"
 }
 
 function ei()
@@ -704,9 +727,9 @@ function e()
   fi
 }
 
-function ef()
-{
-  nvim $(zp2 $@)
+function ef() {
+    local target
+    target=$(resolve_editor_target "$@") && e $target
 }
 
 eg()
@@ -715,20 +738,18 @@ eg()
   gvi -nvim "$@"
 }
 
-
-efg()
-{
-  gvi -nvim "$(zp2 $@)"
+function efg() {
+  _et=$(resolve_editor_target "$@")
+ [ $? -eq 0 ] && gvi -nvim "$_et"
 }
 
-nqq()
-{
-  nvim-qt "$@"
+function nq() {
+    _et=$(resolve_editor_target "$@")
+  [ $? -eq 0 ] && nvim-qt $_et &
 }
 
-nq()
-{
-    nvim-qt "$(zp2 $@)"
+function nqq() {
+    nvim-qt "$@"
 }
 ### NVIM END
 
