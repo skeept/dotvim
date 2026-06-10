@@ -30,6 +30,7 @@ map ; read
 map oc $code ($env:fx -split '\r?\n')
 map oe $nvim ($env:fx -split '\r?\n')
 map ov $gvim ($env:fx -split '\r?\n')
+map on $nvim-qt ($env:fx -split '\r?\n')
 map oz &7zFM ($env:fx -split '\r?\n')
 map ox &explorer.exe $env:f
 map os &Start-Process -FilePath ($env:fx -split '\r?\n')
