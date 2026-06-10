@@ -206,6 +206,9 @@ cmd on-cd &{{
 
 }}
 
+cmd gcs-up $~/bin/gcs_tool.py up $fx
+cmd gcs-down $~/bin/gcs_tool.py down && lf -remote "send $id reload"
+
 map zi zi
 
 # open operations
@@ -242,3 +245,5 @@ map yy copy
 map yb ${{ basename $f | clip.exe }}
 map yd ${{ dirname $f | clip.exe }}
 map yt ${{ ~/bin/showncopy.py $fx }}
+map ygu gcs-up
+map ygd gcs-down
