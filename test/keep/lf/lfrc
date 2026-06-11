@@ -69,6 +69,7 @@ cmd fzf_search_text ${{
 map gt :fzf_search_text
 
 map gi $lg
+map g/ push :glob-select<space>*
 
 cmd copy_to_clip &{{
   if command -v clip.exe >& /dev/null; then

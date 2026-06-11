@@ -51,6 +51,7 @@ map r
 map rr rename
 map rg $lg.exe
 map gi $lg.exe
+map g/ push :glob-select<space>*
 
 # Copy/Paste/Selection (Mirroring Linux "a" prefix)
 map c
