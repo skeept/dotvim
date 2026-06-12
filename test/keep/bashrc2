@@ -551,7 +551,8 @@ pc() {
     remote_url=$(git remote get-url origin 2>/dev/null || echo "")
 
     if command -v s2 >/dev/null 2>&1 && [[ "$remote_url" == *"SABRE2.monorepo.git"* ]]; then
-        s2 commit --hooks-only "$@"
+        # s2 commit --hooks-only "$@"
+        pre-commit "$@"
         return
     fi
 
