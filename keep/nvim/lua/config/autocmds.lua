@@ -17,7 +17,7 @@ vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
 
 -- Disable spell checking for specific data files and anything inside a debug directory
 vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
-  pattern = { "*.dat", "*/debug/*", "debug/*" },
+  pattern = { "*.dat", "*/debug/*", "debug/*", "*output/*", "output/*" },
   desc = "Disable spell checking for data and debug files",
   callback = function()
     vim.opt_local.spell = false
