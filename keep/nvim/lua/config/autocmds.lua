@@ -14,3 +14,12 @@ vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
     vim.bo.filetype = "sh"
   end,
 })
+
+-- Disable spell checking for specific data files and anything inside a debug directory
+vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
+  pattern = { "*.dat", "*/debug/*", "debug/*" },
+  desc = "Disable spell checking for data and debug files",
+  callback = function()
+    vim.opt_local.spell = false
+  end,
+})
