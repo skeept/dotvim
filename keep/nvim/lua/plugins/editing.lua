@@ -19,11 +19,12 @@ return {
   { "chrisbra/NrrwRgn", cmd = { "NR", "NW", "NRV", "NRPrepare", "NRMulti" } },
   {
     "shougo/junkfile.vim",
-    cmd = { "JunkfileOpen", "JunkFileBrowse" },
+    cmd = { "JunkfileOpen", "JunkFileBrowse", "JunkFileGrep" },
     keys = {
       { "<leader>j", group = "Junkfile", desc = "+Junkfile" },
       { "<leader>jf", "<cmd>JunkfileOpen<CR>", mode = { "n", "v" }, desc = "Open junkfile" },
       { "<leader>jb", "<cmd>JunkFileBrowse<CR>", mode = { "n", "v" }, desc = "Browse junkfiles" },
+      { "<leader>jg", "<cmd>JunkFileGrep<CR>", mode = { "n", "v" }, desc = "Grep Junkfiles" },
     },
     dependencies = { "ibhagwan/fzf-lua" },
     config = function()
@@ -49,6 +50,13 @@ return {
       end, {
         desc = "Browse junkfiles with fzf-lua",
       })
+
+      vim.api.nvim_create_user_command("JunkFileGrep", function()
+        require("fzf-lua").live_grep({
+          prompt = "Junkfile grep> ",
+          cwd = junkdir,
+        })
+      end, { desc = "Search inside junkfiles with fzf lua" })
     end,
   },
 }
