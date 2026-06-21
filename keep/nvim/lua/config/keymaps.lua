@@ -74,13 +74,25 @@ local wk = require("which-key")
 wk.add({
   { ",", group = "comma mappings" },
   {
-    ",e",
+    ",fi",
     function()
       local count = vim.v.count
       local modifier = ":p:h" .. string.rep(":h", count)
       require("fzf-lua").files({ cwd = vim.fn.expand("%" .. modifier) })
     end,
     desc = "files in dir (count=go up)",
+  },
+  {
+    ",e",
+    function()
+      local count = vim.v.count
+      local modifier = ":p:h" .. string.rep(":h", count)
+      require("fzf-lua").files({
+        cwd = vim.fn.expand("%" .. modifier),
+        fd_opts = "--color=never --type f --hidden --follow --no-ignore --exclude .git",
+      })
+    end,
+    desc = "fzf: all files incl. ignored in dir (count=go up)",
   },
   {
     ",fd",
@@ -146,18 +158,6 @@ wk.add({
       require("fzf-lua").grep_project()
     end,
     desc = "fzf: grep project",
-  },
-  {
-    ",fi",
-    function()
-      local count = vim.v.count
-      local modifier = ":p:h" .. string.rep(":h", count)
-      require("fzf-lua").files({
-        cwd = vim.fn.expand("%" .. modifier),
-        fd_opts = "--color=never --type f --hidden --follow --no-ignore --exclude .git",
-      })
-    end,
-    desc = "fzf: all files incl. ignored in dir (count=go up)",
   },
   { ",fr", "<cmd>FzfLua oldfiles<cr>", desc = "fzf: recent files" },
   { ",fc", "<cmd>FzfLua commands<cr>", desc = "fzf: commands" },
