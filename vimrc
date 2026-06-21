@@ -173,29 +173,11 @@ endif
 if v:version < 703
   let g:loaded_autoload_l9 = 1
 endif
-
-command! JunkFileBrowse FZF ~/.cache/junkfile
 "==============================================================================}}}
 
 "================== delimitmate ==============================================={{{
 let g:delimitMate_expand_cr = 1
 let g:delimitMate_expand_space = 1
-"==============================================================================}}}
-
-"================== fugitive =================================================={{{
-"nnoremap ,gcf :<C-U>Gcommit -v %<CR>
-"nnoremap ,gca :<C-U>Gcommit -v -a<CR>
-"nnoremap ,gp :<C-U>Git push<CR>
-"nnoremap ,gdf :<C-U>Git diff<CR>
-"==============================================================================}}}
-
-"================== neocomplete ============================================={{{
-" neocomplete is not installed; SetupNeocomplete() is defined in common.vim
-" and guarded by g:load_neocomplete which will be 0. No-op call removed.
-"==============================================================================}}}
-
-"================== Syntastic ================================================={{{
-"let g:syntastic_python_checkers=['flake8']
 "==============================================================================}}}
 
 "================== Junkfile =================================================={{{
@@ -204,6 +186,14 @@ command! -range -nargs=? JunkfileOpen <line1>,<line2>call junkfile#open(
       \ strftime('%Y-%m-%d-%H%M%S.'), <q-args>)
 nnoremap <space>jf :JunkfileOpen<CR>
 vnoremap <space>jf :JunkfileOpen<CR>
+
+command! -bang JunkFileBrowse
+  \ call fzf#vim#files(expand('~/.cache/junkfile'), fzf#vim#with_preview(), <bang>0)
+
+command! -bang -nargs=* JunkFileGrep
+  \ call fzf#vim#grep(
+  \   'rg --column --line-number --no-heading --color=always --smart-case -- '.shellescape(<q-args>), 1,
+  \   fzf#vim#with_preview({'dir': expand('~/.cache/junkfile')}), <bang>0)
 "==============================================================================}}}
 
 "================== NrrwRgn ==================================================={{{

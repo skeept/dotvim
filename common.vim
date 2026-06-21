@@ -216,9 +216,6 @@ nnoremap : ;
 vnoremap ; :
 vnoremap : ;
 
-"nnoremap ,; :<UP>
-"nnoremap ,; :Unite history/command -start-insert<CR>
-
 " we already have <Leader>pt as pastetoogle, but I always get confused
 nnoremap <Leader>tp :set paste!<CR>
 
