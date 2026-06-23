@@ -13,3 +13,10 @@ local home_path = vim.fn.expand("~"):lower():gsub("\\", "/")
 if current_cwd == home_path or current_cwd:find("onedrive") then
   vim.g.root_spec = { "lsp", { ".git", "lua" } } -- Safely slices out the broad 'cwd' scanning fallback
 end
+
+local is_wsl = vim.fn.has("unix") == 1
+  and string.find(vim.fn.readfile("/proc/version")[1] or "", "Microsoft") ~= nil
+if is_wsl then
+  -- vim.opt.guifont = "Ubuntu Mono:h11:w57"
+  vim.opt.guifont = "UbuntuMono Nerd Font:h12"
+end
