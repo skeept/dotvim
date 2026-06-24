@@ -180,6 +180,49 @@ cmd fzf_file_resume ${{
     fi
 }}
 
+# Browse git history of the current file and open a specific revision in Neovim
+cmd file-history ${{
+    # 1. Ensure we are inside a Git repository
+    git rev-parse --is-inside-work-tree >/dev/null 2>&1 || exit 0
+
+    # 2. Get the file's path relative to the Git repository root
+    repo_root=$(git rev-parse --show-toplevel)
+    rel_path=$(realpath --relative-to="$repo_root" "$f")
+
+    # 3. Use fzf to browse commits with a live preview
+    selected=$(git log --oneline --follow -- "$f" | fzf --ansi \
+        --header="History for $(basename "$f") (Enter to open)" \
+        --preview="git diff {1}^! -- '$f'")
+    sha=$(echo "$selected" | awk '{print $1}')
+
+    # 4. If a commit was selected, extract it safely
+    if [ -n "$sha" ]; then
+        filename=$(basename "$f")
+        case "$filename" in
+            *.*) ext="${filename##*.}" ;;
+            *)   ext="txt" ;; # Fallback if file has no extension (like 'lfrc' or 'Dockerfile')
+        esac
+
+        # Create a standard temp file (highly compatible, no flags to break)
+        base_tmp=$(mktemp /tmp/lf-git-XXXXXX)
+
+        if [ -n "$base_tmp" ]; then
+            # Manually append the clean extension
+            tmp="${base_tmp}.${ext}"
+
+            # Extract file contents and open in Neovim if successful
+            if git show "$sha:$rel_path" > "$tmp" 2>/dev/null; then
+                nvim -R "$tmp"
+            fi
+
+            # Clean up both potential files cleanly
+            rm -f "$tmp" "$base_tmp"
+        fi
+    fi
+}}
+
+map gv file-history
+
 # Bindings
 map gf :fzf_file_jump
 map rf :fzf_file_resume
