@@ -317,7 +317,7 @@ command! -nargs=* CaptureOutScratch silent call CaptureOutFun("<args>", 1)
 nnoremap ,co :CaptureOut<SPACE>
 nnoremap <Leader>co :CaptureOut<SPACE>
 nnoremap ,cq :CaptureOutScratch<SPACE>
-nnoremap <Leader>cq :CaptureOutScratch<SPACE>
+nnoremap <Leader>cs :CaptureOutScratch<SPACE>
 nnoremap <Leader>rr :<C-U>call CaptureToRegisterU()<CR>
 nnoremap <Leader>rs :call RedirToScratch()<CR>
 "==============================================================================}}}
