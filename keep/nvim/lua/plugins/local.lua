@@ -26,4 +26,16 @@ return {
       require("wk.capture").setup()
     end,
   },
+  {
+    dir = vim.fn.stdpath("config") .. "/lua/wk",
+    name = "diff_switcher",
+    lazy = true,
+    cmd = { "DiffOtherFile" },
+    keys = {
+      { "<leader>df", "<cmd>DiffOtherFile<cr>", desc = "Diff another file in BL/TR pairs" },
+    },
+    config = function()
+      require("wk.diff_switcher").setup()
+    end,
+  },
 }
