@@ -198,30 +198,35 @@ end, { silent = true, desc = "Close tab or exit from insert mode" })
 
 -- ==========================================================================
 -- Overriding LazyVim Defaults (Swap Root vs Current Folder Searching)
+-- Deferring via VeryLazy ensures these safely overwrite lazy.nvim stubs
 -- ==========================================================================
+vim.api.nvim_create_autocmd("User", {
+  pattern = "VeryLazy",
+  callback = function()
+    -- 1. Swap Files Search: <leader>ff (cwd) vs <leader>fF (root)
+    vim.keymap.set(
+      "n",
+      "<leader>ff",
+      LazyVim.pick("files", { root = false }),
+      { desc = "Find Files (cwd)" }
+    )
+    vim.keymap.set("n", "<leader>fF", LazyVim.pick("files"), { desc = "Find Files (Root Dir)" })
 
--- 1. Swap Files Search: <leader>ff (cwd) vs <leader>fF (root)
-vim.keymap.set(
-  "n",
-  "<leader>ff",
-  LazyVim.pick("files", { root = false }),
-  { desc = "Find Files (cwd)" }
-)
-vim.keymap.set("n", "<leader>fF", LazyVim.pick("files"), { desc = "Find Files (Root Dir)" })
+    -- 2. Swap Live Grep: <leader>sg (cwd) vs <leader>sG (root)
+    vim.keymap.set(
+      "n",
+      "<leader>sg",
+      LazyVim.pick("live_grep", { root = false }),
+      { desc = "Grep (cwd)" }
+    )
+    vim.keymap.set("n", "<leader>sG", LazyVim.pick("live_grep"), { desc = "Grep (Root Dir)" })
 
--- 2. Swap Live Grep: <leader>sg (cwd) vs <leader>sG (root)
-vim.keymap.set(
-  "n",
-  "<leader>sg",
-  LazyVim.pick("live_grep", { root = false }),
-  { desc = "Grep (cwd)" }
-)
-vim.keymap.set("n", "<leader>sG", LazyVim.pick("live_grep"), { desc = "Grep (Root Dir)" })
-
--- 3. Change Global Grep (<leader>/) to search from current folder instead of root
-vim.keymap.set(
-  "n",
-  "<leader>/",
-  LazyVim.pick("live_grep", { root = false }),
-  { desc = "Grep (cwd)" }
-)
+    -- 3. Change Global Grep (<leader>/) to search from current folder instead of root
+    vim.keymap.set(
+      "n",
+      "<leader>/",
+      LazyVim.pick("live_grep", { root = false }),
+      { desc = "Grep (cwd)" }
+    )
+  end,
+})
