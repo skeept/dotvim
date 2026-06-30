@@ -1,0 +1,8 @@
+layout {
+    // Keeps your top tab bar intact
+    pane size=1 borderless=true {
+        plugin location="zellij:tab-bar"
+    }
+    // Your actual terminal area (takes up 100% of the remaining space)
+    pane
+}
