@@ -216,7 +216,9 @@ keybinds clear-defaults=true {
 // changing these requires a restart to take effect
 plugins {
     about location="zellij:about"
-    compact-bar location="zellij:compact-bar"
+    compact-bar location="zellij:compact-bar" {
+      tooltip ""
+    }
     configuration location="zellij:configuration"
     filepicker location="zellij:strider" {
         cwd "/"
@@ -270,6 +272,7 @@ default_mode "locked"
 // Default: "default"
 //
 // default_layout "compact"
+default_layout "compact-top"
 
 // The folder in which Zellij will look for layouts
 // (Requires restart)
