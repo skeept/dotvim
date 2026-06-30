@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# 1. Ensure we are inside a git repo
+if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  echo "Error: Not inside a git repository." >&2
+  exit 1
+fi
+
+REPO_ROOT=$(git rev-parse --show-toplevel)
+CURRENT_DIR=$(pwd)
+
+# 2. Capture any command-line arguments passed to the script
+INITIAL_QUERY="${*:-}"
+
+# 3. Calculate the relative path from the repo root to current directory
+REL_PATH=$(realpath -m --relative-to="$REPO_ROOT" "$CURRENT_DIR")
+if [ "$REL_PATH" = "." ]; then
+  BAZEL_PACKAGE="//"
+else
+  BAZEL_PACKAGE="//${REL_PATH}"
+fi
+
+# 4. Query Bazel rules for the current package only
+TARGETS=$(bazel query "kind('rule', ${BAZEL_PACKAGE}:*)" 2>/dev/null)
+
+if [ -z "$TARGETS" ]; then
+  echo "No buildable targets found in ${BAZEL_PACKAGE}" >&2
+  exit 0
+fi
+
+# 5. Pipe to fzf with query and auto-select shortcuts
+SELECTED_TARGET=$(echo "$TARGETS" | fzf \
+  --height=40% \
+  --reverse \
+  --query="$INITIAL_QUERY" \
+  --select-1 \
+  --prompt="Select target to build > ")
+
+# 6. Build the selected target
+if [ -n "$SELECTED_TARGET" ]; then
+  echo -e "\nRunning: bazel build $SELECTED_TARGET\n"
+  bazel build "$SELECTED_TARGET"
+else
+  echo "Cancelled."
+fi
