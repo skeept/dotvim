@@ -89,3 +89,62 @@ vim.api.nvim_create_user_command("CommandSource", function(opts)
     print("Definition: " .. cmd.definition)
   end
 end, { nargs = 1, complete = "command" })
+
+if vim.fn.exists(":Snacks") == 0 then
+  -- Comprehensive list of common Snacks picker sources for Tab-completion
+  local picker_options = {
+    "files",
+    "grep",
+    "buffers",
+    "recent",
+    "git_files",
+    "git_status",
+    "git_log",
+    "help",
+    "keymaps",
+    "diagnostics",
+    "lsp_references",
+    "lsp_definitions",
+    "lsp_symbols",
+    "lines",
+    "colorschemes",
+    "commands",
+    "autocmds",
+    "projects",
+    "explorer",
+    "undo",
+    "smart",
+    "todo",
+  }
+
+  -- 3. Define the completion function for Snacks <tab>
+  local function snacks_complete(ArgLead, CmdLine, CursorPos)
+    return vim.tbl_filter(function(item)
+      -- Match options starting with whatever the user has typed so far
+      return item:find("^" .. vim.pesc(ArgLead))
+    end, picker_options)
+  end
+
+  -- 2. Create the unified user command
+  vim.api.nvim_create_user_command("Snacks", function(opts)
+    -- Safely look for the snacks plugin
+    local status, snacks = pcall(require, "snacks")
+    if not status then
+      vim.notify("Snacks.nvim is not installed or loaded!", vim.log.levels.ERROR)
+      return
+    end
+
+    local choice = opts.fargs[1]
+
+    -- If no argument is provided (:Snacks <Enter>), launch the main pick window
+    if not choice or choice == "" then
+      snacks.picker.pick()
+    else
+      -- If an argument is provided (e.g. :Snacks files), launch that specific picker
+      snacks.picker.pick(choice)
+    end
+  end, {
+    nargs = "?", -- Accept 0 or 1 argument
+    complete = snacks_complete, -- Attach our custom autocomplete function
+  })
+end
