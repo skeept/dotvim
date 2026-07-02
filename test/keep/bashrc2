@@ -677,7 +677,7 @@ resolve_editor_target() {
     command -v bat &>/dev/null && preview_cmd="bat --style=plain --color=always --line-range :500 {}"
 
     local result
-    result=$(fd --type f --hidden --follow \
+    result=$(fd --type f --hidden --no-ignore --follow \
         --exclude .git -E .venv -E __pycache__ -E node_modules . 2>/dev/null \
         | fzf --preview "$preview_cmd" "${select1[@]}")
 
