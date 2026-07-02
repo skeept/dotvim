@@ -906,14 +906,18 @@ EOF
 
 
 fngrep() {
-    if [ -z "$1" ]; then
-        echo "Usage: fngrep <pattern>" >&2
-        return 1
-    fi
+  if [ -z "$1" ]; then
+    echo "Usage: fngrep <pattern>" >&2
+    return 1
+  fi
 
-    for func in $(compgen -A function); do
-        declare -f "$func" | rg -q "$1" && echo "$func"
-    done
+  for func in $(compgen -A function); do
+    if [[ "$func" == *"$1"* ]]; then
+      echo "$func"
+      continue
+    fi
+    declare -f "$func" | rg -q "$1" && echo "$func"
+  done
 }
 
 pwc() {
