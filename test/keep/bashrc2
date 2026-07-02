@@ -905,6 +905,17 @@ EOF
 }
 
 
+fngrep() {
+    if [ -z "$1" ]; then
+        echo "Usage: fngrep <pattern>" >&2
+        return 1
+    fi
+
+    for func in $(compgen -A function); do
+        declare -f "$func" | rg -q "$1" && echo "$func"
+    done
+}
+
 pwc() {
   local current_dir
   current_dir="$(pwd)"
