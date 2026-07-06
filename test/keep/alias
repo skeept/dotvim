@@ -11,9 +11,6 @@ alias hi=history
 #alias plf='perl -wnle' #loop around a file (must supply a file)
 #alias pe='perl -wle' #simple execute the command provided (note that here won't be looping through the lines of a file)
 alias passwd=yppasswd
-#alias quit=logout
-
-#alias m='TERM=vt100 more'
 
 alias co='command'
 alias cf='showncopy.py'
@@ -24,27 +21,23 @@ alias xtop2='xterm  -geometry 76x25+809+00   -ls  -j -title "top $HOST" -e top -
 alias ba='exec bash'
 alias b='bat'
 alias bt='bat -r 1:5'
-#alias py='python'
-# alias yp='ipython'
-# alias ipy='ipython'
 
 alias ps2='ps -A -o user -o pid -o args'
 alias ps2me='ps -U $(echo -n $USER) -o pid -o args'
 
 alias rs='reset'
 
-#alias vt1='export TERM=vt100'
 alias top1='top -u `whoami` -c '
 
 alias l='eza'
 alias h='history'
 alias jl='jobs -l'
-# alias ju='just'
 alias juc='just --choose'
 alias which='type -a'
 alias gdf='type'
 alias ..='z ..'
 alias ...="z ../.."
+alias .2="z ../../"
 alias .3="z ../../../"
 alias .4="z ../../../.."
 alias .5="z ../../../../../"
@@ -52,38 +45,27 @@ alias di='zi'
 alias du='du -h'
 alias df='df -kh'
 
-#alias tree='tree -Cs' # nice alternative to 'ls'
-
-alias top='xtitle Processes on $HOSTNAME && top'
-
 alias vu='vim -u "${HOME}/.vim/simple.vim" --noplugins'
-# alias rr='ranger'
 alias r='fc -s'
-# alias w3m='w3m -no-graph'
 
 #aliases for conveniently changing dirs
 alias po=popd
 alias pu=pushd
 
-# alias da=date
-# alias ze='unset FPATH; exec zsh'
+alias pypath='py -c "import sys; print(sys.executable)"'
+
 alias wgetnc='wget --no-check-certificate'
 
 alias vpp='vim -u NONE --noplugins'
 alias v=ei
-# alias vime='vim -c "packadd editexisting"'
 
 alias gr='grep -irn'
 alias grep='grep --color=auto --ignore-case'
 alias fdi='fd -I'
 alias rgi='rg -u'
-# alias ii='cygstart'
 alias vc='vd --filetype csv --header 0'
 alias tw='emacsclient -nw'
-#alias tm='tmux -2'
 alias cpv='rsync -ah --info=progress2'
-#alias lg=lazygit
-#alias lazygit=lg
 alias bc=bc4
 alias ddf=dirdiff
 alias ruf='ruff check --select ALL --ignore UP006,UP007,T201,EXE002,ERA001,D203,D213,UP035,FA100,FA102,S101,D407,EM102,TRY003'
