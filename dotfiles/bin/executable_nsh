@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+PROJECT_NAME="${1:-sabre2}"
+
+nix_args=()
+
+if [[ "${USER:-}" == "ark-research-svcdel" ]]; then
+  nix_args+=(--arg sudoless true)
+fi
+
+target_dirs=(
+  "$HOME/src/SABRE2/$PROJECT_NAME"
+  "$HOME/src/S2/$PROJECT_NAME"
+)
+
+for target_dir in "${target_dirs[@]}"; do
+  if [[ -d "$target_dir" ]]; then
+    cd "$target_dir"
+
+    if [[ ! -f "shell.nix" && ! -f "default.nix" ]]; then
+      echo "Error: No 'shell.nix' or 'default.nix' found in $target_dir" >&2
+      exit 1
+    fi
+
+    pwd
+    echo exec nix-shell "${nix_args[@]}"
+    exec nix-shell "${nix_args[@]}"
+  fi
+
+done
+echo "Error: Project '$PROJECT_NAME' not found in:" >&2
+printf "  - %s\n" "${target_dirs[@]}"
+exit 1
