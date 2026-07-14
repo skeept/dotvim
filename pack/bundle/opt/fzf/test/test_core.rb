@@ -971,6 +971,24 @@ class TestCore < TestInteractive
     tmux.until { |lines| assert_includes lines[1], ' aabravo/aabravo' }
   end
 
+  def test_transform_put
+    tmux.send_keys %(seq 1000 | #{FZF} --bind 'a:transform:echo put'), :Enter
+    tmux.until { |lines| assert_equal 1000, lines.match_count }
+    tmux.send_keys :a
+    tmux.until { |lines| assert_equal '> a', lines.last }
+    tmux.send_keys :b
+    tmux.until { |lines| assert_equal '> ab', lines.last }
+  end
+
+  # The async callback runs in a later iteration, but 'put' must still insert
+  # the key that triggered the bg-transform (snapshot of the scheduling event).
+  def test_bg_transform_put
+    tmux.send_keys %(seq 1000 | #{FZF} --bind 'a:bg-transform:sleep 0.5; echo put'), :Enter
+    tmux.until { |lines| assert_equal 1000, lines.match_count }
+    tmux.send_keys 'ab'
+    tmux.until { |lines| assert_equal '> ba', lines.last }
+  end
+
   def test_accept_non_empty
     tmux.send_keys %(seq 1000 | #{fzf('--print-query --bind enter:accept-non-empty')}), :Enter
     tmux.until { |lines| assert_equal 1000, lines.match_count }
@@ -1142,6 +1160,130 @@ class TestCore < TestInteractive
     tmux.until { |lines| assert_equal 28, lines.match_count }
     tmux.send_keys :BSpace, '0'
     tmux.until { |lines| assert_equal 10, lines.match_count }
+  end
+
+  def test_wait_action
+    tmux.send_keys %((seq 100; sleep 15) | #{FZF} --bind 'start:search(1)+wait+best'), :Enter
+    tmux.until { |lines| assert_equal 20, lines.match_count }
+    tmux.until { |lines| assert lines.any_include?('20/100 (..)') }
+    tmux.send_keys 'C-c'
+    tmux.until { |lines| refute lines.any_include?('20/100 (..)') }
+    # Ctrl-C cancels the wait; fzf keeps running and accepts input again
+    tmux.send_keys '99'
+    tmux.until { |lines| assert_equal 1, lines.match_count }
+  end
+
+  def test_wait_action_start
+    # 'start:wait' blocks on the initial load until reading completes
+    tmux.send_keys %((seq 100; sleep 15) | #{FZF} --bind 'start:wait'), :Enter
+    tmux.until { |lines| assert_equal 100, lines.match_count }
+    tmux.until { |lines| assert lines.any_include?('(..)') }
+    tmux.send_keys 'C-c'
+    tmux.until { |lines| refute lines.any_include?('(..)') }
+    # Ctrl-C cancels the wait; fzf keeps running and accepts input again
+    tmux.send_keys '99'
+    tmux.until { |lines| assert_equal 1, lines.match_count }
+  end
+
+  def test_wait_action_bg_transform
+    # A bg-transform result is unrelated to the wait, so it's applied while the
+    # wait is still blocking rather than dropped. The long read keeps the wait
+    # blocked so the (instant) bg-transform completes during the block; the
+    # header must show while '(..)' is still displayed.
+    tmux.send_keys %((seq 100; sleep 2) | #{FZF} --bind 'start:bg-transform-header(echo hello)+search(5)+wait'), :Enter
+    tmux.until { |lines| assert(lines.any_include?('(..)') && lines.any_include?('hello')) }
+  end
+
+  def test_wait_action_bg_transform_actions
+    # Actions parsed from a generic bg-transform result are also applied
+    # while wait-blocked
+    tmux.send_keys %((seq 100; sleep 2) | #{FZF} --bind 'start:bg-transform(echo change-header:hello)+search(5)+wait'), :Enter
+    tmux.until { |lines| assert(lines.any_include?('(..)') && lines.any_include?('hello')) }
+  end
+
+  def test_wait_action_bg_transform_join
+    # A 'wait' in a bg-transform result body joins the ongoing wait; the
+    # actions after it run when the wait unblocks instead of being dropped
+    tmux.send_keys %((seq 100; sleep 2) | #{FZF} --bind 'start:bg-transform(echo change-header{hello}+wait+change-footer{world})+search(5)+wait'), :Enter
+    tmux.until { |lines| assert(lines.any_include?('(..)') && lines.any_include?('hello') && !lines.any_include?('world')) }
+    tmux.until { |lines| assert(lines.any_include?('world') && !lines.any_include?('(..)')) }
+  end
+
+  def test_wait_action_query_change
+    # Query-editing actions must also make wait block; accept must run on the
+    # results of the new query, not the stale ones
+    tmux.send_keys %(seq 100 | #{fzf("--bind 'space:change-query(55)+wait+accept'")}), :Enter
+    tmux.until { |lines| assert_equal 100, lines.match_count }
+    tmux.send_keys :Space
+    assert_equal '55', fzf_output
+  end
+
+  def test_wait_action_trigger_join
+    # A wait armed inside a triggered chord defers the remaining actions of
+    # the outer binding as well
+    tmux.send_keys %((seq 100; sleep 2) | #{FZF} --bind 'start:trigger(x)+change-footer(world)' --bind 'x:search(5)+wait'), :Enter
+    tmux.until { |lines| assert(lines.any_include?('(..)') && !lines.any_include?('world')) }
+    tmux.until { |lines| assert(lines.any_include?('world') && !lines.any_include?('(..)')) }
+  end
+
+  def test_wait_action_trigger_siblings
+    # Chords after a wait-arming chord are deferred, not dropped
+    tmux.send_keys %((seq 100; sleep 2) | #{FZF} --bind 'start:trigger(x,y)+change-footer(world)' --bind 'x:search(5)+wait' --bind 'y:change-header(hello)'), :Enter
+    tmux.until { |lines| assert(lines.any_include?('(..)') && !lines.any_include?('hello') && !lines.any_include?('world')) }
+    tmux.until { |lines| assert(lines.any_include?('hello') && lines.any_include?('world') && !lines.any_include?('(..)')) }
+  end
+
+  def test_wait_action_cancel_rearm
+    # Deferral works even when the wait is cancelled and re-armed within a
+    # single action list. --query keeps 'cancel' non-fatal in case the Space
+    # arrives after the initial wait has already unblocked.
+    tmux.send_keys %((seq 100; sleep 2) | #{FZF} --query 5 --bind 'start:wait' --bind 'space:cancel+trigger(x)+change-footer(world)' --bind 'x:search(5)+wait'), :Enter
+    tmux.until { |lines| assert lines.any_include?('(..)') }
+    tmux.send_keys :Space
+    tmux.until { |lines| assert(lines.any_include?('world') && !lines.any_include?('(..)')) }
+  end
+
+  def test_wait_action_jump
+    # A pending jump action must survive the wake-up event after unblock
+    tmux.send_keys %((seq 100; sleep 2) | #{FZF} --jump-labels abc --bind 'start:search(5)+wait+jump'), :Enter
+    tmux.until { |lines| assert_equal 'a 5', lines[-3] }
+    tmux.send_keys 'a'
+    tmux.until { |lines| assert_equal '> 5', lines[-3] }
+  end
+
+  def test_wait_action_bracketed_paste
+    # A wait armed by a binding fired from a pasted character must not break
+    # bracketed paste handling: paste-end passes through the block so
+    # t.pasting is cleared and the pending search is dispatched
+    tmux.send_keys %(seq 100 | #{FZF} --bind 'a:put(a)+wait+first'), :Enter
+    tmux.until { |lines| assert_equal 100, lines.match_count }
+    tmux.paste_bracketed('1a2')
+    # Search for the edited query must run; blocked forever before the fix
+    tmux.until { |lines| assert_equal 0, lines.match_count }
+    # Filtering must still work afterwards
+    tmux.send_keys 'C-u', '55'
+    tmux.until { |lines| assert_equal 1, lines.match_count }
+  end
+
+  def test_wait_action_expect
+    # --expect keys are ignored while wait-blocked, like the rest of the input
+    tmux.send_keys %((seq 100; sleep 2) | #{fzf('--expect ctrl-t --bind start:wait')}), :Enter
+    tmux.until { |lines| assert lines.any_include?('(..)') }
+    tmux.send_keys 'C-t'
+    # fzf must still be running; the wait unblocks when loading completes
+    tmux.until { |lines| assert_equal 100, lines.match_count }
+    tmux.until { |lines| refute lines.any_include?('(..)') }
+    tmux.send_keys 'C-t'
+    assert_equal %w[ctrl-t 1], fzf_output_lines
+  end
+
+  def test_track_blocked_bg_transform
+    # A bg-transform result completing while track-blocked is applied, not
+    # dropped. The header must show while '+T*' is still displayed.
+    tmux.send_keys "seq 100 | #{FZF} --track --id-nth .. --bind 'ctrl-r:bg-transform-header(echo hello)+reload(sleep 2; seq 100)'", :Enter
+    tmux.until { |lines| assert_includes lines[-2], '+T' }
+    tmux.send_keys 'C-r'
+    tmux.until { |lines| assert(lines.any_include?('+T*') && lines.any_include?('hello')) }
   end
 
   def test_clear_selection
@@ -1385,6 +1527,17 @@ class TestCore < TestInteractive
     tmux.until { |lines| assert_includes lines, '> 9' }
     tmux.send_keys :BSpace
     tmux.until { |lines| assert_includes lines, '> 1' }
+  end
+
+  def test_result_final_event
+    tmux.send_keys %[(seq 100; sleep 1; seq 100) | #{FZF} \\
+        --query 1 \\
+        --bind 'result:transform-header(echo "R=$FZF_MATCH_COUNT")' \\
+        --bind 'result-final:transform-footer(echo "F=$FZF_MATCH_COUNT")'], :Enter
+    tmux.until { |lines| assert lines.any_include?('R=20') }
+    tmux.until { |lines| refute lines.any_include?('F=20') }
+    tmux.until { |lines| assert lines.any_include?('R=40') }
+    tmux.until { |lines| assert lines.any_include?('F=40') }
   end
 
   def test_every_event
@@ -2314,6 +2467,26 @@ class TestCore < TestInteractive
     tmux.until do
       expected.merge!(FZF_INPUT_STATE: 'disabled', FZF_ACTION: 'disable-search', FZF_KEY: 'space')
       assert_equal expected, env_vars.slice(*expected.keys)
+    end
+  end
+
+  def test_env_current_item_size_limit
+    preview = %[(echo START; env | grep '^FZF_CURRENT_ITEM='; echo END) > #{tempname}]
+    # Large item (> 64 KB) is omitted so it cannot overflow ARG_MAX and break exec
+    tmux.send_keys %(head -c 70000 /dev/zero | tr '\\0' a | #{FZF} --preview-window 0 --preview "#{preview}"), :Enter
+    wait do
+      content = File.exist?(tempname) ? File.read(tempname) : ''
+      assert_includes content, 'END'
+      refute_includes content, 'FZF_CURRENT_ITEM='
+    end
+    tmux.send_keys :Enter
+    FileUtils.rm_f(tempname)
+    # Smaller item is exported as usual
+    tmux.send_keys %(head -c 1000 /dev/zero | tr '\\0' a | #{FZF} --preview-window 0 --preview "#{preview}"), :Enter
+    wait do
+      content = File.exist?(tempname) ? File.read(tempname) : ''
+      assert_includes content, 'END'
+      assert_includes content, 'FZF_CURRENT_ITEM=' + ('a' * 1000)
     end
   end
 

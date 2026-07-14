@@ -136,6 +136,7 @@ class Tmux
       rescue Minitest::Assertion
         retries += 1
         raise if retries > 5
+
         retry
       end
       send_keys 'clear', :Enter
@@ -174,6 +175,12 @@ class Tmux
 
   def paste(str)
     system('tmux', 'setb', str, ';', 'pasteb', '-t', win, ';', 'send-keys', '-t', win, 'Enter')
+  end
+
+  # Paste with bracketed paste control codes so fzf sees
+  # bracketed-paste-begin/end around the content
+  def paste_bracketed(str)
+    system('tmux', 'setb', str, ';', 'pasteb', '-p', '-t', win)
   end
 
   def capture
@@ -295,7 +302,7 @@ class Tmux
       if @shell == :nushell
         message = "Prepare[#{tries}]"
         send_keys 'C-u', 'C-l'
-        sleep 0.2
+        sleep(0.2)
         send_keys ' ', 'C-u', :Enter, message
         self.until { |lines| lines[-1] == message }
       else

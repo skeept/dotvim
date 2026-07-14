@@ -115,9 +115,10 @@ func! s:set_args(args) abort
   endif
   let normalized_argv = map(argv(), 'fnamemodify(v:val, ":p")')
   for f in a:args
-    let i = index(normalized_argv, f)
+    let normalized_f = fnamemodify(f, ':p')
+    let i = index(normalized_argv, normalized_f)
     if -1 == i
-      exe '$argadd '.fnameescape(fnamemodify(f, ':p'))
+      exe '$argadd '.fnameescape(normalized_f)
     elseif 1 == len(a:args)
       exe (i+1).'argdelete'
       syntax clear DirvishArg
@@ -171,6 +172,11 @@ func! dirvish#shdo(paths, cmd) abort
   augroup END
 
   nnoremap <buffer><silent> Z! :silent write<Bar>exe '!'.(has('win32')?fnameescape(escape(expand('%:p:gs?\\?/?'), '&\')):join(map(split(&shell), 'shellescape(v:val)')).' %')<Bar>if !v:shell_error<Bar>close<Bar>endif<CR>
+  let b:dirvish_dir = escape(shellescape(head),'&\')
+
+  if exists("#User#DirvishShdo")
+    doautocmd <nomodeline> User DirvishShdo
+  endif
 endf
 
 " Returns true if the buffer was modified by the user.
@@ -295,6 +301,10 @@ func! s:open_selected(splitcmd, bg, line1, line2) abort
 
     if isdir
       exe (p || a:splitcmd ==# 'edit' ? '' : a:splitcmd.'|') 'Dirvish' fnameescape(shortname)
+    elseif has('nvim') " Use bufload() to avoid fnameescape() fragility.
+      let bnr = bufadd(v:lua.vim.fs.normalize(shortname))
+      call setbufvar(bnr, '&buflisted', 1)
+      exe (p ? 'buffer' : {'edit':'buffer','split':'sbuffer','vsplit':'vert sbuffer','tabedit':'tab sbuffer'}[a:splitcmd]) bnr
     else
       exe (p ? 'edit' : a:splitcmd) fnameescape(shortname)
     endif
@@ -412,7 +422,7 @@ func! s:buf_render(dir, lastpath) abort
 
   if !empty(a:lastpath)
     let pat = tr(s:f(a:lastpath), '/', s:sep)  " platform slashes
-    call search('\V\^'.escape(pat, '\').'\$', 'cw')
+    call search('\V\C\^'.escape(pat, '\').'\$', 'cw')
   endif
   " Place cursor on the tail (last path segment).
   call search('\'.s:sep.'\zs[^\'.s:sep.']\+\'.s:sep.'\?$', 'c', line('.'))

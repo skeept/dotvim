@@ -1,6 +1,63 @@
 CHANGELOG
 =========
 
+0.74.0
+------
+_Release highlights: https://junegunn.github.io/fzf/releases/0.74.0/_
+
+- On tmux 3.7 or above, `--popup` starts fzf in a floating pane instead of a popup (#4850)
+    - Unlike a popup, a floating pane is not modal; you can switch to other panes and windows while fzf is running, move and resize the pane with the mouse, zoom it to fullscreen, and use copy-mode in it
+    - A floating pane always has a native border, which is what makes the pane movable and resizable, so `border-native` is implied
+    - A popup is used instead when a border style is explicitly specified with `--border`, so that the fzf-drawn border is the only border shown (`none` and `line` are treated as no border)
+      ```sh
+      fzf --popup --border
+      ```
+    - `--border-label` is set as the title of the floating pane, and is displayed on the border if `pane-border-status` is enabled in tmux
+      ```sh
+      fzf --popup --border-label ' fzf '
+      ```
+- On Zellij, `--popup` uses the native border by default, consistent with tmux, so that the pane can be moved and resized with the mouse; fzf draws its own border when a border style is explicitly specified with `--border`
+    - `--border-label` is set as the name of the pane, displayed on the native border
+- Added `result-final` event, a variant of `result` that is not triggered while the input stream is still open (#4835)
+    - Use it for one-shot, per-query actions that would otherwise re-fire on every intermediate snapshot during loading
+      ```sh
+      # 'result' fires per intermediate snapshot (header keeps updating during load);
+      # 'result-final' fires once after the stream closes (footer shows the final count)
+      (seq 100; sleep 1; seq 100) | fzf --query 1 \
+        --bind 'result:transform-header(echo result: $FZF_MATCH_COUNT),result-final:transform-footer(echo final: $FZF_MATCH_COUNT)'
+      ```
+- Added `wait` action to block subsequent actions until search completes (#4825)
+    - Useful for chaining query-changing actions with motion actions to ensure operations on complete results
+      ```sh
+      # Wait for search to complete before moving to the best match
+      fzf --bind 'start:change-query(foo)+wait+best'
+      ```
+    - The initial loading of the input is also considered a search in progress, so `start:wait` can be used to wait until the input is fully loaded
+      ```sh
+      # Move to the last item after the input is fully loaded
+      (seq 1000; sleep 1; seq 1001 2000) | fzf --bind 'start:wait+last'
+      ```
+- Bound `alt-left` to `backward-word` and `alt-right` to `forward-word` by default (#4833)
+- Bug fixes and improvements
+    - Skip `$FZF_CURRENT_ITEM` export when the item is larger than 64 KB; a huge item can overflow `ARG_MAX` and break preview and other child commands with `E2BIG` (#4806)
+    - `transform` and `bg-transform` now allow a bare `put` action in the output to insert the key that triggered the action
+      ```sh
+      # Insert the typed key ('a') into the query
+      fzf --bind 'a:transform:echo put'
+      ```
+    - `ALT-C` in zsh no longer resolves symbolic links when changing the directory, consistent with the `cd` builtin (#4816) (@silverneko)
+    - Fixed horizontal mouse wheel events being treated as vertical scrolling (#4848) (@jason5122)
+    - Fixed `bw` theme not inheriting overridden colors
+    - fish: `CTRL-R` now works when `$fish_color_normal` or `$fish_color_comment` is empty or invalid (#4831) (@bitraid)
+    - Fixed empty-shell detection in the install script (#4813)
+    - Fixed the install script writing nushell source lines into the config files of other shells (#4812)
+
+0.73.1
+------
+- Bug fixes
+    - Skip `$FZF_CURRENT_ITEM` export when the item contains a NUL byte; `exec(2)` rejects the env, breaking preview and other child commands (#4806)
+    - Fixed O(n^2) HTTP body accumulation in `--listen`; a single ~390 KB request could block the single-threaded server for ~8 s (Michal Majchrowicz, Marcin Wyczechowski, AFINE Team)
+
 0.73.0
 ------
 _Release highlights: https://junegunn.github.io/fzf/releases/0.73.0/_

@@ -19,11 +19,11 @@ jobs:
     runs-on: macos-latest
     environment: release
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
           go-version: stable
 
@@ -60,7 +60,7 @@ jobs:
             | tee tmp/release-note
 
       - name: Run goreleaser
-        uses: goreleaser/goreleaser-action@v6
+        uses: goreleaser/goreleaser-action@v7
         with:
           version: latest
           args: >-
@@ -68,7 +68,7 @@ jobs:
                 && 'release --clean --release-notes tmp/release-note'
                 || 'release --snapshot --clean --skip=publish' }}
         env:
-          GITHUB_TOKEN:           ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN:           ${{ secrets.RELEASE_PAT }}
           MACOS_SIGN_P12:         ${{ secrets.MACOS_SIGN_P12 }}
           MACOS_SIGN_PASSWORD:    ${{ secrets.MACOS_SIGN_PASSWORD }}
           MACOS_NOTARY_ISSUER_ID: ${{ secrets.MACOS_NOTARY_ISSUER_ID }}

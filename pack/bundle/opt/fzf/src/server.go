@@ -153,7 +153,7 @@ func startHttpServer(address listenAddress, actionChannel chan []*action, getHan
 func (server *httpServer) handleHttpRequest(conn net.Conn) string {
 	contentLength := 0
 	apiKey := ""
-	body := ""
+	var bodyBuilder strings.Builder
 	answer := func(code string, message string) string {
 		message += "\n"
 		return code + fmt.Sprintf("Content-Length: %d%s", len(message), crlf+crlf+message)
@@ -175,7 +175,7 @@ func (server *httpServer) handleHttpRequest(conn net.Conn) string {
 			token := data[:found+len(crlf)]
 			return len(token), token, nil
 		}
-		if atEOF || len(body)+len(data) >= contentLength {
+		if atEOF || bodyBuilder.Len()+len(data) >= contentLength {
 			return 0, data, bufio.ErrFinalToken
 		}
 		return 0, nil, nil
@@ -218,7 +218,7 @@ Loop:
 				}
 			}
 		case 2: // Request body
-			body += text
+			bodyBuilder.WriteString(text)
 		}
 	}
 
@@ -234,12 +234,13 @@ Loop:
 		return answer(httpUnavailable+jsonContentType, `{"error":"timeout"}`)
 	}
 
+	body := bodyBuilder.String()
 	if len(body) < contentLength {
 		return bad("incomplete request")
 	}
 	body = body[:contentLength]
 
-	actions, err := parseSingleActionList(strings.Trim(string(body), "\r\n"))
+	actions, err := parseSingleActionList(strings.Trim(string(body), "\r\n"), false)
 	if err != nil {
 		return bad(err.Error())
 	}

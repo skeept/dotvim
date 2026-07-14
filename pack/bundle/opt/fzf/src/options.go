@@ -10,7 +10,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"unicode"
 
 	"github.com/junegunn/fzf/src/algo"
 	"github.com/junegunn/fzf/src/tui"
@@ -76,7 +75,7 @@ Usage: fzf [options]
     --min-height=HEIGHT[+]   Minimum height when --height is given as a percentage.
                              Add '+' to automatically increase the value
                              according to the other layout options (default: 10+).
-    --popup[=OPTS]           Start fzf in a popup window (requires tmux 3.3+ or Zellij 0.44+)
+    --popup[=OPTS]           Start fzf in a floating pane (requires tmux 3.3+ or Zellij 0.44+)
                              [center|top|bottom|left|right][,SIZE[%]][,SIZE[%]]
                              [,border-native] (default: center,50%)
     --tmux[=OPTS]            Alias for --popup
@@ -428,7 +427,7 @@ func parseTmuxOptions(arg string, index int) (*tmuxOptions, error) {
 	var err error
 	opts := defaultTmuxOptions(index)
 	tokens := splitRegexp.Split(arg, -1)
-	errorToReturn := errors.New("invalid popup option: " + arg + " (expected: [center|top|bottom|left|right][,SIZE[%]][,SIZE[%][,border-native]])")
+	errorToReturn := errors.New("invalid popup option: " + arg + " (expected: [center|top|bottom|left|right][,SIZE[%]][,SIZE[%]][,border-native])")
 	if len(tokens) == 0 || len(tokens) > 4 {
 		return nil, errorToReturn
 	}
@@ -1064,6 +1063,8 @@ func parseKeyChords(str string, message string) (map[tui.Event]string, []tui.Eve
 			add(tui.Focus)
 		case "result":
 			add(tui.Result)
+		case "result-final":
+			add(tui.ResultFinal)
 		case "resize":
 			add(tui.Resize)
 		case "one":
@@ -1734,10 +1735,10 @@ Loop:
 	return masked
 }
 
-func parseSingleActionList(str string) ([]*action, error) {
+func parseSingleActionList(str string, putAllowed bool) ([]*action, error) {
 	// We prepend a colon to satisfy argActionRegexp and remove it later
 	masked := maskActionContents(":" + str)[1:]
-	return parseActionList(masked, str, []*action{}, false)
+	return parseActionList(masked, str, []*action{}, putAllowed)
 }
 
 func parseActionList(masked string, original string, prevActions []*action, putAllowed bool) ([]*action, error) {
@@ -1957,6 +1958,8 @@ func parseActionList(masked string, original string, prevActions []*action, putA
 			} else {
 				return nil, errors.New("unable to put non-printable character")
 			}
+		case "wait":
+			appendAction(actWait)
 		case "bell":
 			appendAction(actBell)
 		case "exclude":
@@ -2043,8 +2046,7 @@ func parseKeymap(keymap map[tui.Event][]*action, str string) error {
 				}
 				key = firstKey(keys)
 			}
-			putAllowed := key.Type == tui.Rune && unicode.IsGraphic(key.Char)
-			keymap[key], err = parseActionList(pair[1], origPairStr[len(pair[0])+1:], keymap[key], putAllowed)
+			keymap[key], err = parseActionList(pair[1], origPairStr[len(pair[0])+1:], keymap[key], key.Printable())
 			if err != nil {
 				return err
 			}
