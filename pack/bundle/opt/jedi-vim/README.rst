@@ -4,9 +4,14 @@
 jedi-vim - awesome Python autocompletion with VIM
 #################################################
 
-.. image:: https://travis-ci.org/davidhalter/jedi-vim.svg?branch=master
-   :target: https://travis-ci.org/davidhalter/jedi-vim
-   :alt: Travis-CI build status
+.. image:: https://github.com/davidhalter/jedi-vim/actions/workflows/ci.yml/badge.svg?branch=master
+    :target: https://github.com/davidhalter/jedi-vim/actions
+    :alt: Tests
+
+**Jedi-VIM has been superseeded by a combination of LSP and Zuban/Jedi with it, I
+generally advise people to use [Zuban](http://github.com/zubanls/zuban),
+because it fixes a lot of issues Jedi has with typing and is 10x-100x faster.
+Jedi-vim is in maintenance-mode and new features will likely not be added.**
 
 jedi-vim is a VIM binding to the autocompletion library
 `Jedi <http://github.com/davidhalter/jedi>`_.
