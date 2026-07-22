@@ -23,7 +23,7 @@ Describe endwise rule
 
   Context in vim
 
-    Before all
+    Before each
       new | setf vim
     End
 
@@ -31,6 +31,10 @@ Describe endwise rule
       call Expect("fu x()\<CR>").to_change_input_as("fu x()\n\nendfu")
       call Expect("function s:hoge(fuga)\<CR>").to_change_input_as("function s:hoge(fuga)\n\nendfunction")
       call Expect("if x ~=# '\%(ji\|\)ja;s/j'\<CR>").to_change_input_as("if x ~=# '\%(ji\|\)ja;s/j'\n\nendif")
+    End
+
+    It should input enddef after export def
+      call Expect("export def\<CR>").to_change_input_as("export def\n\nenddef")
     End
   End
 

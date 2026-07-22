@@ -9,7 +9,7 @@ function! lexima#endwise_rule#make()
   for at in ['fu', 'fun', 'func', 'funct', 'functi', 'functio', 'function', 'if', 'wh', 'whi', 'whil', 'while', 'for', 'try', 'def']
     call add(rules, lexima#endwise_rule#make_rule('^\s*' . at . '\>.*\%#$', 'end' . at, 'vim', []))
   endfor
-
+  call add(rules, lexima#endwise_rule#make_rule('^\s*export def\>.*\%#$', 'enddef', 'vim', []))
   for at in ['aug', 'augroup']
     call add(rules, lexima#endwise_rule#make_rule('^\s*' . at . '\s\+.\+\%#$', at . ' END', 'vim', []))
   endfor
