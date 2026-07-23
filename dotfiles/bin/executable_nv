@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+SOCKET="/tmp/nvimsocket"
+
+# Check if the socket exists AND if the Neovim server is actually responding
+if [ -S "$SOCKET" ] && nvr --servername "$SOCKET" --remote-expr "v:true" >/dev/null 2>&1; then
+  # Server is alive. Use nvr to open the file(s).
+  nvr --servername "$SOCKET" "$@"
+else
+  # Server is not responding. Clean up any dead socket file if it exists.
+  rm -f "$SOCKET"
+
+  # Check if a graphical display is available (X11 or Wayland)
+  if [ -n "$DISPLAY" ] || [ -n "$WAYLAND_DISPLAY" ]; then
+    # GUI available, launch nvim-qt
+    nvim-qt -- --listen "$SOCKET" "$@"
+  else
+    # No GUI available (e.g., TTY or SSH), fallback to terminal nvim
+    nvim --listen "$SOCKET" "$@"
+  fi
+fi
