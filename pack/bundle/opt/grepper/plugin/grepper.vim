@@ -357,11 +357,24 @@ function! s:restore_mapping(mapping)
   endif
 endfunction
 
+function! s:shellescape(query) abort
+    if &shell =~# 'fish$'
+        let l:shell = &shell
+        try
+            let &shell = 'sh'
+            return shellescape(a:query)
+        finally
+            let &shell = l:shell
+        endtry
+    endif
+    return shellescape(a:query)
+endfunction
+
 " s:escape_query() {{{2
 function! s:escape_query(flags, query)
   let tool = s:get_current_tool(a:flags)
   let a:flags.query_escaped = 1
-  return shellescape(has_key(tool, 'escape')
+  return s:shellescape(has_key(tool, 'escape')
         \ ? escape(a:query, tool.escape)
         \ : a:query)
 endfunction
@@ -413,7 +426,7 @@ function! s:escape_cword(flags, cword)
   endif
   let a:flags.query_orig = a:cword
   let a:flags.query_escaped = 1
-  return shellescape(escaped_cword)
+  return s:shellescape(escaped_cword)
 endfunction
 
 " s:compute_working_directory() {{{2
@@ -730,7 +743,7 @@ function! s:process_flags(flags)
       " input() got empty input, so no query was added to the history.
       call histadd('input', a:flags.query)
     elseif a:flags.prompt_quote == 1
-      let a:flags.query = shellescape(a:flags.query)
+      let a:flags.query = s:shellescape(a:flags.query)
     endif
   else
     " input() was skipped, so add query to the history manually.
@@ -890,7 +903,7 @@ function! s:build_cmdline(flags) abort
       call map(a:flags.buflist, 'shellescape(escape(fnamemodify(v:val, ":."), "\\"))')
       let &shellslash = shellslash
     else
-      call map(a:flags.buflist, 'shellescape(fnamemodify(v:val, ":."))')
+      call map(a:flags.buflist, 's:shellescape(fnamemodify(v:val, ":."))')
     endif
   endif
 
