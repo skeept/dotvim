@@ -1,0 +1,12 @@
+{{with .Message -}}
+  {{. -}}
+{{else with .UserOptions.eza_info -}}
+  {{. -}}
+{{end -}}
+{{.SPACER -}}
+{{with .Progress}}{{join . " "}} {{end -}}
+{{with .Copy}}{{len . | printf "copy: %d "}}{{end -}}
+{{with .Cut}}{{len . | printf "cut: %d "}}{{end -}}
+{{with .Select}}{{len . | printf "select: %d "}}{{end -}}
+{{with .Filter}}{{join . " " | printf "filter: %s "}}{{end -}}
+{{printf "%d/%d" .Index .Total}}

@@ -1,4 +1,5 @@
 set previewer ~/.vim/test/keep/lf/lf_previewer.sh
+set rulerfile ~/.vim/test/keep/lf/ruler
 
 cmd mkdir $mkdir -p $1
 map i $bat --style=plain --color=always --paging=auto $f
@@ -53,7 +54,7 @@ cmd on-load &{{
 }}
 
 cmd on-select &{{
-    lf -remote "send $id set statfmt \"$(eza -ld --color=always "$f")\""
+    lf -remote "send $id set user_eza_info \"$(eza -ld --color=always "$f")\""
 }}
 
 cmd fzf_search_text ${{

@@ -70,10 +70,10 @@ alias bc=bc4
 alias ddf=dirdiff
 alias ruf='ruff check --select ALL --ignore UP006,UP007,T201,EXE002,ERA001,D203,D213,UP035,FA100,FA102,S101,D407,EM102,TRY003'
 
-alias gcl=gcloud
 alias gsu=gsutil
 alias gu=gsutil
 alias gc=gcloud
+alias gcs='gcloud storage'
 alias db=duckdb
 
 alias dui='dua i'
