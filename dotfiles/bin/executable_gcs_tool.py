@@ -122,6 +122,56 @@ def handle_upload(files):
             print(f"Warning: File '{file}' does not exist, skipping.", file=sys.stderr)
 
 
+def get_gcs_items(current_path):
+    """Lists both files and folders at the current GCS path."""
+    try:
+        result = subprocess.run(
+            ["gcloud", "storage", "ls", current_path],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        lines = result.stdout.splitlines()
+        # Return all items, filtering out the current directory path itself
+        return [line.strip() for line in lines if line.strip() != current_path]
+    except subprocess.CalledProcessError:
+        print(f"Error: Could not list contents for {current_path}", file=sys.stderr)
+        return []
+
+
+def navigate_for_download(bucket_root):
+    """An interactive loop allowing the user to drill down and select files or folders."""
+    current_path = bucket_root if bucket_root.endswith("/") else bucket_root + "/"
+
+    while True:
+        absolute_items = get_gcs_items(current_path)
+
+        # Allow downloading the current directory in its entirety
+        choices = [". (Download this entire directory)"]
+
+        if current_path.count("/") > 3:
+            choices.append(".. (Go up a directory)")
+
+        for item in absolute_items:
+            relative_name = item[len(current_path) :]
+            choices.append(relative_name)
+
+        selection = fzf_select(choices, f"GCS Download [{current_path}]: ")
+
+        if selection.startswith(". "):
+            return current_path
+        elif selection.startswith(".. "):
+            stripped = current_path.rstrip("/")
+            parent_path = stripped.rsplit("/", 1)[0] + "/"
+            current_path = parent_path
+        elif selection.endswith("/"):
+            # It's a directory: append and drill down
+            current_path = current_path + selection
+        else:
+            # It's a file: return the full path immediately for download
+            return current_path + selection
+
+
 def handle_download():
     buckets = load_buckets()
     if not buckets:
@@ -130,21 +180,11 @@ def handle_download():
 
     selected_bucket = fzf_select(buckets, "Select source bucket: ")
 
-    print(f"Indexing items in {selected_bucket}...")
-    cmd_list = subprocess.run(
-        ["gcloud", "storage", "ls", "--recursive", selected_bucket],
-        capture_output=True,
-        text=True,
-    )
-
-    objects = [line.strip() for line in cmd_list.stdout.split("\n") if line.strip()]
-    if not objects:
-        print("Bucket is empty.", file=sys.stderr)
-        sys.exit(0)
-
-    selected_object = fzf_select(objects, "Select object to download: ")
+    print("Opening directory browser...")
+    selected_object = navigate_for_download(selected_bucket)
 
     print(f"Downloading {selected_object} to current directory...")
+    # Because we kept "-r" (recursive), it cleanly handles both single files and whole directories
     subprocess.run(["gcloud", "storage", "cp", "-r", selected_object, "."])
 
 
