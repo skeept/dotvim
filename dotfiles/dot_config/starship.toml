@@ -14,9 +14,17 @@ when = true
 # Example: Display in cyan, followed by a space for separation
 format = "[$output](cyan)"
 
+[username]
+disabled = true
+
 [character]
 success_symbol = "[❯](bold #5e81ac)"
 error_symbol = "[✗](#bf616a)"
+
+[container]
+symbol = "🐳 "
+format = '[$symbol]($style) '
+style = "red bold"
 
 [directory]
 format = "[$path]($style fg:#5e81ac) "
