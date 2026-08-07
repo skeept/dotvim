@@ -159,7 +159,7 @@ cmd on-select &{{
     $info = (eza -ld --color=always "$env:f")
     # Escape quotes for the remote command
     $info = $info -replace '"', '\"'
-    lf -remote "send $env:id set statfmt `"$info`""
+    lf -remote "send $env:id set user_eza_info `"$info`""
 }}
 
 # Git Indicators on load
