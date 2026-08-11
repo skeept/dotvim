@@ -1348,5 +1348,55 @@ EOF
 }
 ##### tmux utility functions }}
 
+function gs()
+{
+  if [ $# -eq 0 ]; then
+    gcloud storage
+    return 0
+  fi
+
+  local subcommand="$1"
+  shift
+
+  local processed_args=()
+  local arg
+
+  for arg in "$@"; do
+    # Trap paste errors (e.g. 'gs://' dangling on its own)
+    if [[ "$arg" == "gs://" || "$arg" == "gs:/" ]]; then
+      echo "Error: Dangerous input '$arg' detected. Check for accidental spaces in your paste." >&2
+      return 1
+    fi
+
+    # Pass flags through untouched
+    if [[ "$arg" == -* ]]; then
+      processed_args+=("$arg")
+      continue
+    fi
+
+    # Auto-prepend 'gs://' if missing and NOT an existing local file/directory
+    if [[ "$arg" != gs://* && "$arg" != s3://* && ! -e "$arg" ]]; then
+      arg="gs://${arg}"
+    fi
+
+    # Bucket existence check for destructive operations
+    if [[ "$subcommand" == "rm" || "$subcommand" == "rsync" ]]; then
+      local clean_path="${arg#gs://}"
+      local bucket_name="${clean_path%%/*}"
+      local bucket="gs://${bucket_name}"
+
+      echo "Validating target bucket standard: $bucket..."
+      if ! gcloud storage buckets describe "$bucket" &>/dev/null; then
+        echo "Error: Bucket '$bucket' does not exist or is unreachable. Command aborted." >&2
+        return 1
+      fi
+    fi
+
+    processed_args+=("$arg")
+  done
+
+  gcloud storage "$subcommand" "${processed_args[@]}"
+}
+
 
 mtimer end of bashrc
