@@ -23,6 +23,7 @@ set previewer ~\\vimfiles\\test\\keep\\lf\\lf\\preview.bat
 # ------------------------------------------------------------------------------
 
 map i $bat --style=plain --color=always --paging=auto $env:f
+map <c-j> shell
 map <enter> read
 map ; read
 
@@ -69,11 +70,13 @@ map y
 map yy copy
 map yb &{{ (Get-Item $env:f).Name | clip.exe }}
 map yd &{{ (Get-Item $env:f).DirectoryName | clip.exe }}
+map gy &{{ $env:fx | clip.exe }}
 
 map v
 map vv invert
 map ve $nvim $env:f
 map vd $wsl -e /home/sabre/.local/bin/visidata (wsl wslpath ($env:f.Replace('\', '/')))
+map ze 7z x "$env:f"
 
 # ------------------------------------------------------------------------------
 # CUSTOM COMMANDS

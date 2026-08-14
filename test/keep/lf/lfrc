@@ -226,6 +226,7 @@ map om $emacs -nw $f
 map on &gvi :N $f
 map oo &gvi $f
 map ov $vim $f
+map ze ${{ 7z x "$f" }}
 map oz &7zFM.exe $f
 map or $nv $f
 map D &gio trash $fx
