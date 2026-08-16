@@ -231,6 +231,8 @@ Notes:
   * `proselint`
 * FusionScript
   * `fusion-lint`
+* Generic
+  * `ast-grep`
 * Git Commit Messages
   * `gitlint`
 * Gleam
@@ -329,6 +331,8 @@ Notes:
   * `inko` !!
 * ISPC
   * `ispc`!!
+* Janet
+  * `janet-format`
 * Java
   * `PMD`
   * `checkstyle`!!
@@ -434,6 +438,7 @@ Notes:
   * `languagetool`!!
   * `markdownlint`!!
   * `marksman`
+  * `mdformat`
   * `mdl`
   * `pandoc`
   * `prettier`
@@ -726,6 +731,7 @@ Notes:
   * `terraform-lsp`
   * `tflint`
   * `tfsec`
+  * `trivy`
 * Texinfo
   * `alex`
   * `cspell`

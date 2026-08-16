@@ -1,6 +1,37 @@
 CHANGELOG
 =========
 
+0.74.3
+------
+- Performance optimizations for non-ASCII input
+    - A line holding any non-ASCII character is kept as a rune array, and the prefilter did not run on those lines, so every item went through the full score matrix
+    - Queries are up to 16x faster, the gain growing with how much of the line is non-ASCII
+    - Non-ASCII queries are up to 12x faster
+    - Reading non-ASCII input is up to 37% faster and uses up to 29% less memory, the gain depending on how early the first non-ASCII character appears in the line
+    - Accented Latin and fullwidth forms get the faster reading but not the faster queries, because those characters can still match their ASCII counterparts
+    - ASCII input is unaffected
+- Fixed an image from a preview command being torn apart when its rows are separated by IND instead of newlines, as `chafa` does under tmux (#4885)
+- Fixed `replace-query` corrupting the item text when the query is edited afterwards
+- fzf no longer turns bracketed paste mode off on exit when the terminal already had it on, which broke pasting in shells that run fzf from a line editor widget (#4887)
+- Fixed startup blocking on terminals that never answer escape sequences, such as FreeBSD virtual terminals. fzf waited for a reply until a key was pressed, then dropped that keystroke (#2860, #976)
+
+0.74.2
+------
+- Performance optimizations for short queries
+    - Short queries scan the largest candidate sets, and the first keystroke scans the whole input
+    - Single-character queries are up to 2.4x faster
+    - Two-character queries are up to 1.4x faster
+- Faster sorting of search results, skipping redundant radix passes
+- `change-border-label` and `transform-border-label` now work on the native border of a tmux or Zellij floating pane
+- Fixed Kitty graphics sequences from a preview command being taken by tmux as pane title requests
+- Fixed an image at the top of the preview being torn by `--preview-window ~N`
+- Fixed nondeterministic match highlight positions
+- Fixed signal and resize handlers persisting after `Run()` returns when fzf is used as a library
+- fzf now detects terminal resize on Windows in `--height` mode (#4790) (@Cyrus580529)
+- fish: fixed history command being affected by user initialization scripts, and improved timestamp colors in CTRL-R (#4862) (@bitraid)
+- zsh: fixed CTRL-R not propagating the exit status of fzf when perl is available (#4871) (@LangLangBart, @Toliak)
+- zsh: fixed `chpwd` hook functions being called twice by ALT-C (#4879) (@LangLangBart, @lucc)
+
 0.74.1
 ------
 - The default separator on the info line is no longer shown when the input section is already visually separated from the list section by a border line

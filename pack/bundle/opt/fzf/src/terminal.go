@@ -57,7 +57,11 @@ var offsetComponentRegex *regexp.Regexp
 var offsetTrimCharsRegex *regexp.Regexp
 var passThroughBeginRegex *regexp.Regexp
 var passThroughEndTmuxRegex *regexp.Regexp
+var sixelBeginRegex *regexp.Regexp
+var cursorBackRegex *regexp.Regexp
 var ttyin *os.File
+
+var inTmux = len(os.Getenv("TMUX")) > 0
 
 const clearCode string = "\x1b[2J"
 
@@ -92,6 +96,10 @@ func init() {
 	*/
 	passThroughBeginRegex = regexp.MustCompile(`\x1bPtmux;\x1b\x1b|\x1b(_G|P[0-9;]*q)|\x1b]1337;`)
 	passThroughEndTmuxRegex = regexp.MustCompile(`[^\x1b]\x1b\\`)
+	sixelBeginRegex = regexp.MustCompile(`^\x1bP[0-9;]*q`)
+
+	// CUB right before an IND, used to return to the column a row started on
+	cursorBackRegex = regexp.MustCompile(`\x1b\[([0-9]*)D$`)
 }
 
 type jumpMode int
@@ -468,6 +476,7 @@ type Terminal struct {
 	clickFooterLine      int
 	clickFooterColumn    int
 	proxyScript          string
+	setNativeLabel       func(string)
 	numLinesCache        map[int32]numLinesCacheValue
 	raw                  bool
 	lastActivity         time.Time
@@ -1140,6 +1149,7 @@ func NewTerminal(opts *Options, eventBox *util.EventBox, executor *util.Executor
 		printer:            opts.Printer,
 		printsep:           opts.PrintSep,
 		proxyScript:        opts.ProxyScript,
+		setNativeLabel:     nativeLabelSetter(),
 		merger:             em,
 		passMerger:         em,
 		resultMerger:       em,
@@ -2268,6 +2278,14 @@ func (t *Terminal) displayWidth(runes []rune) int {
 func (t *Terminal) displayWidthWithPrefix(str string, prefixWidth int) int {
 	width, _ := util.RunesWidth([]rune(str), prefixWidth, t.tabstop, math.MaxInt32)
 	return width
+}
+
+// displayWidthWithoutEscapes is displayWidthWithPrefix for a string that may
+// still carry pass-throughs and ANSI codes, neither of which take any column.
+func (t *Terminal) displayWidthWithoutEscapes(str string, prefixWidth int) int {
+	_, text := extractPassThroughs(str)
+	stripped, _, _ := extractColor(text, nil, nil)
+	return t.displayWidthWithPrefix(stripped, prefixWidth)
 }
 
 const (
@@ -4673,15 +4691,23 @@ func (t *Terminal) renderPreviewArea(unchanged bool) {
 	height := t.pwindow.Height()
 	body := t.previewer.lines
 	headerLines := t.activePreviewOpts.headerLines
+	lineNo := -t.previewer.offset + headerLines
+	// Scrollbar is sized from the body alone, split off or not
+	scrollLines := len(body)
 	// Do not enable preview header lines if it's value is too large
 	if headerLines > 0 && headerLines < min(len(body), height) {
+		scrollLines -= headerLines
 		header := t.previewer.lines[0:headerLines]
-		body = t.previewer.lines[headerLines:]
-		// Always redraw header
-		t.renderPreviewText(height, header, 0, false)
-		t.pwindow.MoveAndClear(t.pwindow.Y(), 0)
+		// A separate header pass would resume the body inside an image, which
+		// takes up more rows than the line it arrives on
+		if !containsImage(header) {
+			// Always redraw header
+			t.renderPreviewText(height, header, 0, false)
+			t.pwindow.MoveAndClear(t.pwindow.Y(), 0)
+			body = t.previewer.lines[headerLines:]
+		}
 	}
-	t.renderPreviewText(height, body, -t.previewer.offset+headerLines, unchanged)
+	t.renderPreviewText(height, body, lineNo, unchanged)
 
 	if !unchanged {
 		t.pwindow.FinishFill()
@@ -4692,7 +4718,7 @@ func (t *Terminal) renderPreviewArea(unchanged bool) {
 	}
 
 	effectiveHeight := height - headerLines
-	barLength, barStart := getScrollbar(1, len(body), effectiveHeight, min(len(body)-effectiveHeight, t.previewer.offset-headerLines))
+	barLength, barStart := getScrollbar(1, scrollLines, effectiveHeight, min(scrollLines-effectiveHeight, t.previewer.offset-headerLines))
 	t.renderPreviewScrollbar(headerLines, barLength, barStart)
 }
 
@@ -4756,6 +4782,66 @@ func findPassThrough(line string) []int {
 	return []int{loc[0], loc[1] + pos + 2}
 }
 
+// tmux takes a bare APC as a request to set the pane title, so a Kitty
+// graphics command never reaches the terminal and clobbers the title on the
+// way. 'kitten icat --clear' emits one unwrapped. Sixel is left alone.
+// https://github.com/junegunn/fzf/issues/4870
+func wrapPassThrough(passThrough string, tmux bool) string {
+	if !tmux || !strings.HasPrefix(passThrough, "\x1b_G") {
+		return passThrough
+	}
+	// Only the sequence is passed through, not the trailing CR
+	suffix := ""
+	if strings.HasSuffix(passThrough, "\r") {
+		passThrough, suffix = passThrough[:len(passThrough)-1], "\r"
+	}
+	return "\x1bPtmux;" + strings.ReplaceAll(passThrough, "\x1b", "\x1b\x1b") + "\x1b\\" + suffix
+}
+
+// Whether the sequence draws an image. Kitty commands that only transmit or
+// delete do not
+func isImagePassThrough(passThrough string) bool {
+	// Unwrap the tmux passthrough sequence, in which every ESC is doubled
+	if after, ok := strings.CutPrefix(passThrough, "\x1bPtmux;"); ok {
+		passThrough = strings.ReplaceAll(after, "\x1b\x1b", "\x1b")
+	}
+	if after, ok := strings.CutPrefix(passThrough, "\x1b_G"); ok {
+		// Control data ends at the payload delimiter or at the terminator
+		keys := after
+		if index := strings.IndexAny(keys, ";\x1b"); index >= 0 {
+			keys = keys[:index]
+		}
+		for _, key := range strings.Split(keys, ",") {
+			// Transmit and display, or put an image already transmitted
+			if key == "a=T" || key == "a=p" {
+				return true
+			}
+		}
+		return false
+	}
+	if after, ok := strings.CutPrefix(passThrough, "\x1b]1337;"); ok {
+		return strings.HasPrefix(after, "File=") || strings.HasPrefix(after, "MultipartFile=")
+	}
+	return sixelBeginRegex.MatchString(passThrough)
+}
+
+// Whether any line carries an image
+func containsImage(lines []string) bool {
+	for _, line := range lines {
+		for {
+			loc := findPassThrough(line)
+			if loc == nil {
+				break
+			}
+			if isImagePassThrough(line[loc[0]:loc[1]]) {
+				return true
+			}
+			line = line[loc[1]:]
+		}
+	}
+	return false
+}
+
 func extractPassThroughs(line string) ([]string, string) {
 	passThroughs := []string{}
 	transformed := ""
@@ -4773,6 +4859,38 @@ func extractPassThroughs(line string) ([]string, string) {
 	}
 
 	return passThroughs, transformed
+}
+
+// splitOnIND breaks a preview line on IND (ESC D), which moves the cursor
+// down one line, keeping the column. A program drawing at a column offset ends
+// its rows with IND instead of a newline, because ONLCR would rewrite a newline
+// as CR NL and snap the cursor to column 0. chafa does this for Kitty Unicode
+// placeholders, and without the break the whole image collapses into a single
+// line.
+//
+// The column is tracked and re-created with padding so that an indented image
+// keeps its indent, and a CUB right before the IND is subtracted, which is how
+// chafa returns to the column its rows start on.
+func (t *Terminal) splitOnIND(line string) []string {
+	chunks := strings.Split(line, "\x1bD")
+	if len(chunks) == 1 {
+		return nil
+	}
+
+	lines := make([]string, 0, len(chunks))
+	col := 0
+	for _, chunk := range chunks[:len(chunks)-1] {
+		lines = append(lines, strings.Repeat(" ", col)+chunk+"\n")
+		col += t.displayWidthWithoutEscapes(chunk, col)
+		if match := cursorBackRegex.FindStringSubmatch(chunk); match != nil {
+			back := 1
+			if len(match[1]) > 0 {
+				back, _ = strconv.Atoi(match[1])
+			}
+			col = max(0, col-back)
+		}
+	}
+	return append(lines, strings.Repeat(" ", col)+chunks[len(chunks)-1])
 }
 
 // followOffset computes the correct content-line offset for follow mode,
@@ -4996,7 +5114,7 @@ Loop:
 				} else {
 					t.pwindow.Move(y, x)
 				}
-				t.tui.PassThrough(passThrough)
+				t.tui.PassThrough(wrapPassThrough(passThrough, inTmux))
 
 				if requiredLines > 0 {
 					if y+requiredLines == height {
@@ -6347,7 +6465,11 @@ func (t *Terminal) Loop() error {
 											version--
 											offset = 0
 										}
-										lines = append(lines, line)
+										if split := t.splitOnIND(line); split != nil {
+											lines = append(lines, split...)
+										} else {
+											lines = append(lines, line)
+										}
 									}
 									if err != nil {
 										t.reqBox.Set(reqPreviewDisplay, previewResult{version, lines, offset, ""})
@@ -7254,6 +7376,10 @@ func (t *Terminal) Loop() error {
 					if t.border != nil {
 						t.borderLabel, t.borderLabelLen = t.ansiLabelPrinter(label, &tui.ColBorderLabel, false)
 						req(reqRedrawBorderLabel)
+					} else if t.setNativeLabel != nil {
+						// fzf draws no border of its own; the label is on the
+						// native border of the floating pane
+						t.setNativeLabel(label)
 					}
 				})
 			case actChangePreviewLabel, actTransformPreviewLabel, actBgTransformPreviewLabel:
@@ -7291,7 +7417,9 @@ func (t *Terminal) Loop() error {
 			case actReplaceQuery:
 				current := t.currentItem()
 				if current != nil {
-					t.input = current.text.ToRunes()
+					// ToRunes aliases the item text in rune mode, and the
+					// editing actions below append into t.input in place
+					t.input = append([]rune{}, current.text.ToRunes()...)
 					t.cx = len(t.input)
 				}
 			case actFatal:

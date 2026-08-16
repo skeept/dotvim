@@ -223,7 +223,7 @@ func TestReplacePlaceholder(t *testing.T) {
 	// while the double q is invalid, it is useful here for testing purposes
 	templateToOutput[`{q}`] = "{{.O}}" + query + "{{.O}}"
 	templateToOutput[`{fzf:query}`] = "{{.O}}" + query + "{{.O}}"
-	templateToOutput[`{fzf:action} {fzf:prompt}`] = "backward-delete-char-eof 'prompt'"
+	templateToOutput[`{fzf:action} {fzf:prompt}`] = `backward-delete-char-eof {{.O}}prompt{{.O}}`
 
 	// IV. escaping placeholder
 	templateToOutput[`\{}`] = `{}`
@@ -251,9 +251,9 @@ func TestReplacePlaceholder(t *testing.T) {
 }
 
 func TestQuoteEntry(t *testing.T) {
-	type quotes struct{ E, O, SQ, DQ, BS string } // standalone escape, outer, single and double quotes, backslash
-	unixStyle := quotes{``, `'`, `'\''`, `"`, `\`}
-	windowsStyle := quotes{`^`, `^"`, `'`, `\^"`, `\\`}
+	type quotes struct{ E, O, SQ, DQ, BS, PB string } // standalone escape, outer, single and double quotes, doubled and plain backslash
+	unixStyle := quotes{``, `'`, `'\''`, `"`, `\`, `\`}
+	windowsStyle := quotes{`^`, `^"`, `'`, `\^"`, `\\`, `\`}
 	var effectiveStyle quotes
 	exec := util.NewExecutor("")
 
@@ -280,13 +280,13 @@ func TestQuoteEntry(t *testing.T) {
 		`>`:                       `{{.O}}{{.E}}>{{.O}}`,
 		`(`:                       `{{.O}}{{.E}}({{.O}}`,
 		`)`:                       `{{.O}}{{.E}}){{.O}}`,
-		`@`:                       `{{.O}}{{.E}}@{{.O}}`,
+		`@`:                       `{{.O}}@{{.O}}`,
 		`^`:                       `{{.O}}{{.E}}^{{.O}}`,
 		`%`:                       `{{.O}}{{.E}}%{{.O}}`,
 		`!`:                       `{{.O}}{{.E}}!{{.O}}`,
 		`%USERPROFILE%`:           `{{.O}}{{.E}}%USERPROFILE{{.E}}%{{.O}}`,
-		`C:\Program Files (x86)\`: `{{.O}}C:{{.BS}}Program Files {{.E}}(x86{{.E}}){{.BS}}{{.O}}`,
-		`"C:\Program Files"`:      `{{.O}}{{.DQ}}C:{{.BS}}Program Files{{.DQ}}{{.O}}`,
+		`C:\Program Files (x86)\`: `{{.O}}C:{{.PB}}Program Files {{.E}}(x86{{.E}}){{.BS}}{{.O}}`,
+		`"C:\Program Files"`:      `{{.O}}{{.DQ}}C:{{.PB}}Program Files{{.DQ}}{{.O}}`,
 	}
 
 	for input, expected := range tests {
@@ -440,7 +440,7 @@ func TestPowershellCommands(t *testing.T) {
 		// to explorer, which will prompt user to pick editing program for the fzf-preview file
 		// the temp file contains: `cat "C:\test.txt"`
 		// TODO this should actually work
-		{give{`powershell -NoProfile -Command {f}`, ``, newItems(`cat "C:\test.txt"`)}, want{match: `^powershell -NoProfile -Command .*\fzf-preview-[0-9]{9}$`}},
+		{give{`powershell -NoProfile -Command {f}`, ``, newItems(`cat "C:\test.txt"`)}, want{match: `^powershell -NoProfile -Command .*\fzf-temp-[0-9]+$`}},
 	}
 
 	// to force powershell-style escaping we temporarily set environment variable that fzf honors
@@ -546,6 +546,89 @@ func TestExtractPassthroughs(t *testing.T) {
 		if result != "foobazfoobazfoobaz"+garbage || len(passthroughs) != 6 {
 			t.Error("failed to extract passthroughs")
 		}
+	}
+}
+
+func TestWrapPassThrough(t *testing.T) {
+	for _, passThrough := range []string{
+		"\x1bPtmux;\x1b\x1b_Ga=d,d=A\x1b\x1b\\\x1b\\", // Already wrapped
+		"\x1bP0;1;0q#0;2;0;0;0#0~~@@vv@@~~@\x1b\\",    // Sixel
+		"\x1b]1337;File=inline=1:AAAA\a",              // iTerm2
+	} {
+		if got := wrapPassThrough(passThrough, true); got != passThrough {
+			t.Errorf("should have been left alone: %q -> %q", passThrough, got)
+		}
+	}
+
+	kitty := "\x1b_Ga=d,d=A\x1b\\"
+	if got := wrapPassThrough(kitty, false); got != kitty {
+		t.Errorf("should have been left alone outside of tmux: %q", got)
+	}
+
+	// ESC characters are doubled, and the trailing carriage return is kept
+	// outside of the wrapper
+	for _, test := range []struct{ input, want string }{
+		{kitty, "\x1bPtmux;\x1b\x1b_Ga=d,d=A\x1b\x1b\\\x1b\\"},
+		{kitty + "\r", "\x1bPtmux;\x1b\x1b_Ga=d,d=A\x1b\x1b\\\x1b\\\r"},
+		{"\x1b_Gm=1;\x1bAAA=\x1b\\", "\x1bPtmux;\x1b\x1b_Gm=1;\x1b\x1bAAA=\x1b\x1b\\\x1b\\"},
+	} {
+		if got := wrapPassThrough(test.input, true); got != test.want {
+			t.Errorf("expected %q, got %q", test.want, got)
+		}
+	}
+}
+
+func TestIsImagePassThrough(t *testing.T) {
+	for _, tc := range []struct {
+		given string
+		image bool
+	}{
+		// Kitty
+		{"\x1b_Ga=T,f=32,s=1258,v=1295,c=74,r=35,m=1\x1b\\", true},
+		{"\x1b_Ga=p,i=1\x1b\\", true},
+		// The action key is not always first, and a put carries no payload
+		{"\x1b_Gi=1,a=p\x1b\\", true},
+		{"\x1b_Ga=p\x1b\\", true},
+		{"\x1b_Ga=T,f=100\x1b\\\r", true},
+		{"\x1b_Gi=1,a=d\x1b\\", false},
+		{"\x1b_Ga=d,d=A\x1b\\", false},          // 'kitten icat --clear'
+		{"\x1b_Ga=q,i=1\x1b\\", false},          // query
+		{"\x1b_Gi=1,f=100\x1b\\", false},        // transmit only, the default action
+		{"\x1b_Gm=1;AAAA\x1b\\", false},         // continuation chunk
+		{"\x1b_Ga=f,i=1;AAAA\x1b\\", false},     // animation frame
+		{"\x1b_Ga=T,U=1,f=32;AAAA\x1b\\", true}, // unicode placeholder
+		// Wrapped in the tmux passthrough sequence
+		{"\x1bPtmux;\x1b\x1b_Ga=T,f=100\x1b\x1b\\\x1b\\", true},
+		{"\x1bPtmux;\x1b\x1b_Ga=d,d=A\x1b\x1b\\\x1b\\", false},
+		{"\x1bPtmux;\x1b\x1b_Gi=1,a=p\x1b\x1b\\\x1b\\", true},
+		// iTerm2
+		{"\x1b]1337;File=inline=1:AAAA\a", true},
+		{"\x1b]1337;MultipartFile=inline=1\a", true},
+		{"\x1b]1337;SetUserVar=foo=YmFy\a", false},
+		{"\x1b]1337;CurrentDir=/tmp\a", false},
+		// Sixel
+		{"\x1bP0;1;0q#0;2;0;0;0#0~~@@vv@@~~@\x1b\\", true},
+		{"\x1bPq#0~~\x1b\\", true},
+		{"\x1bPtmux;\x1b\x1bP0;1;0q#0~~\x1b\x1b\\\x1b\\", true},
+		{"", false},
+	} {
+		if actual := isImagePassThrough(tc.given); actual != tc.image {
+			t.Errorf("expected %v for %q, got %v", tc.image, tc.given, actual)
+		}
+	}
+
+	if containsImage([]string{"foo", "bar"}) {
+		t.Error("plain text carries no image")
+	}
+	if !containsImage([]string{"foo", "bar\x1b_Ga=T,f=100\x1b\\baz"}) {
+		t.Error("failed to find an image in a line")
+	}
+	if containsImage([]string{"foo\x1b_Ga=d,d=A\x1b\\"}) {
+		t.Error("a delete command is not an image")
+	}
+	// The image is not the first passthrough on the line
+	if !containsImage([]string{"\x1b_Ga=d,d=A\x1b\\text\x1b_Ga=T,f=100;AAAA\x1b\\"}) {
+		t.Error("failed to look past an earlier passthrough")
 	}
 }
 
@@ -766,5 +849,75 @@ func TestWordWrapAnsiLine(t *testing.T) {
 	result = term.wordWrapAnsiLine("hello\tworld", 12, 2)
 	if len(result) != 2 || result[0] != "hello" || result[1] != "world" {
 		t.Errorf("Tab wrap: %q", result)
+	}
+}
+
+func TestSplitOnIND(t *testing.T) {
+	term := &Terminal{tabstop: 8}
+	for _, tc := range []struct {
+		name string
+		line string
+		want []string
+	}{
+		{
+			// Nothing to do, so the caller keeps the line as it read it
+			name: "no IND",
+			line: "foo\n",
+			want: nil,
+		},
+		{
+			// chafa: CUB returns to the column the row started on
+			name: "rows at column 0",
+			line: "AAA\x1b[3D\x1bDBBB\x1b[3D\x1bDCCC\n",
+			want: []string{"AAA\x1b[3D\n", "BBB\x1b[3D\n", "CCC\n"},
+		},
+		{
+			// 'printf "  "; chafa ...'
+			name: "indented rows",
+			line: "  AAA\x1b[3D\x1bDBBB\x1b[3D\x1bDCCC\n",
+			want: []string{"  AAA\x1b[3D\n", "  BBB\x1b[3D\n", "  CCC\n"},
+		},
+		{
+			name: "tab indent expands to the tab stop",
+			line: "\tAAA\x1b[3D\x1bDBBB\x1b[3D\x1bDCCC\n",
+			want: []string{"\tAAA\x1b[3D\n", "        BBB\x1b[3D\n", "        CCC\n"},
+		},
+		{
+			// IND on its own keeps the column
+			name: "bare IND",
+			line: "AB\x1bDCD\n",
+			want: []string{"AB\n", "  CD\n"},
+		},
+		{
+			name: "CUB without a parameter moves back one",
+			line: "AB\x1b[D\x1bDCD\n",
+			want: []string{"AB\x1b[D\n", " CD\n"},
+		},
+		{
+			name: "CUB past the left edge is clamped",
+			line: "AB\x1b[9D\x1bDCD\n",
+			want: []string{"AB\x1b[9D\n", "CD\n"},
+		},
+		{
+			name: "SGR codes take no column",
+			line: "\x1b[31mAB\x1b[m\x1b[2D\x1bDCD\n",
+			want: []string{"\x1b[31mAB\x1b[m\x1b[2D\n", "CD\n"},
+		},
+		{
+			name: "pass-throughs take no column",
+			line: "\x1b_Ga=T,c=2,r=1\x1b\\AB\x1b[2D\x1bDCD\n",
+			want: []string{"\x1b_Ga=T,c=2,r=1\x1b\\AB\x1b[2D\n", "CD\n"},
+		},
+	} {
+		got := term.splitOnIND(tc.line)
+		if len(got) != len(tc.want) {
+			t.Errorf("%s: got %q, want %q", tc.name, got, tc.want)
+			continue
+		}
+		for idx, line := range got {
+			if line != tc.want[idx] {
+				t.Errorf("%s: line %d: got %q, want %q", tc.name, idx, line, tc.want[idx])
+			}
+		}
 	}
 }

@@ -496,9 +496,11 @@ fu! csv#GetDelimiter(first, last, ...) "{{{3
         endfor
 	let &cmdheight = _cmdheight
         let &lz = _lz
-        let Delim = map(temp, 'matchstr(substitute(v:val, "\n", "", ""), "^\\s*\\d\\+")')
-        let Delim = filter(temp, 'v:val=~''\d''')
-        let max   = max(values(temp))
+
+        " convert temp into Delim with numeric counts
+        let Delim = map(temp, {_, v -> str2nr(matchstr(substitute(v, "\n", "", ""), "^\\s*\\d\\+"))})
+        call filter(Delim, 'v:val > 0')
+
         if lang != 'C'
             exe "sil lang mess" lang
         endif
@@ -506,11 +508,15 @@ fu! csv#GetDelimiter(first, last, ...) "{{{3
         let result=[]
         call setpos('.', _cur)
         let @/ = _s
-        for [key, value] in items(Delim)
-            if value == max
-                return key
-            endif
-        endfor
+
+        if !empty(Delim)
+            let maxcount = max(values(Delim))
+            for [key, value] in items(Delim)
+                if value == maxcount
+                    return key
+                endif
+            endfor
+        endif
         return ''
     else
         " There is no delimiter for fixedwidth files

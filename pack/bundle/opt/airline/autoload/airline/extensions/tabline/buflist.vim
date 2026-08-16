@@ -44,7 +44,7 @@ function! airline#extensions#tabline#buflist#list()
   let exclude_buffers = get(g:, 'airline#extensions#tabline#exclude_buffers', [])
   let exclude_paths = get(g:, 'airline#extensions#tabline#excludes', [])
   let exclude_preview = get(g:, 'airline#extensions#tabline#exclude_preview', 1)
-  let CustomFilter = get(g:, 'airline#extensions#tabline#filter_function')
+  let l:CustomFilter = get(g:, 'airline#extensions#tabline#filter_function')
 
   let list = (exists('g:did_bufmru') && g:did_bufmru) ? BufMRUList() : range(1, bufnr("$"))
 
@@ -77,7 +77,7 @@ function! airline#extensions#tabline#buflist#list()
       " check other types last
       elseif s:ExcludeOther(nr, exclude_preview)
         continue
-      elseif !empty(CustomFilter) && !call(CustomFilter, [nr])
+      elseif !empty(l:CustomFilter) && !call(l:CustomFilter, [nr])
         continue
       endif
 

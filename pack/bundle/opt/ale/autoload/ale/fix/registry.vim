@@ -22,6 +22,11 @@ let s:default_registry = {
 \       'suggested_filetypes': ['apkbuild'],
 \       'description': 'Fix policy violations found by apkbuild-lint in APKBUILDs',
 \   },
+\   'ast-grep': {
+\       'function': 'ale#fixers#astgrep#Fix',
+\       'suggested_filetypes': ['c', 'cpp', 'cs', 'css', 'elixer', 'go', 'haskell', 'html', 'java', 'javascript', 'json', 'kotlin', 'lua', 'nix', 'php', 'python', 'ruby', 'rust', 'scala', 'sh', 'solidity', 'swift', 'tsx', 'typescript', 'yaml'],
+\       'description': 'Apply ast-grep rules.',
+\   },
 \   'autoimport': {
 \       'function': 'ale#fixers#autoimport#Fix',
 \       'suggested_filetypes': ['python'],
@@ -462,6 +467,11 @@ let s:default_registry = {
 \       'suggested_filetypes': ['markdown'],
 \       'description': 'Fix markdown files with pandoc.',
 \   },
+\   'mdformat': {
+\       'function': 'ale#fixers#mdformat#Fix',
+\       'suggested_filetypes': ['markdown'],
+\       'description': 'Fix Markdown files with mdformat.',
+\   },
 \   'pymarkdown': {
 \       'function': 'ale#fixers#pymarkdown#Fix',
 \       'suggested_filetypes': ['markdown'],
@@ -736,6 +746,11 @@ let s:default_registry = {
 \       'function': 'ale#fixers#cljfmt#Fix',
 \       'suggested_filetypes': ['clojure'],
 \       'description': 'formatter and linter for clojure files',
+\   },
+\   'janet-format': {
+\       'function': 'ale#fixers#janet_format#Fix',
+\       'suggested_filetypes': ['janet'],
+\       'description': 'Formatter for janet files',
 \   },
 \   'typstyle': {
 \       'function': 'ale#fixers#typstyle#Fix',
